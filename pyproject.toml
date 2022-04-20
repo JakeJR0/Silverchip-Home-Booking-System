@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "repl_python3_Silverchip-Home-Booking-System-1"
+version = "0.1.0"
+description = ""
+authors = ["JakeJR0 <<>>"]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+tkcalendar = "^1.6.1"
+
+[tool.poetry.dev-dependencies]
+
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
