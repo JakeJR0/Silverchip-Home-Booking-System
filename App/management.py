@@ -377,3 +377,5 @@ def setup(database=None, test=False):
       pass
 
   _database = database
+  
+  return True

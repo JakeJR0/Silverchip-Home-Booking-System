@@ -7,6 +7,7 @@ authors = ["JakeJR0 <<>>"]
 [tool.poetry.dependencies]
 python = "^3.8"
 tkcalendar = "^1.6.1"
+pytest = "^7.1.1"
 
 [tool.poetry.dev-dependencies]
 
