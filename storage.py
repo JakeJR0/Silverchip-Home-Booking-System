@@ -11,6 +11,9 @@ class DatabaseNamingError(ValueError):
     if the database file name is incorrect.
   """
   pass
+
+class DatabaseStatupFailure(SystemError):
+  pass
   
 class Database:
   """
@@ -29,7 +32,10 @@ class Database:
   @property
   def con(self):
     return self._con
-
+    
+  def save(self):
+    self._con.commit()
+    
   def _setup(self):
     try:
       con = self._con
@@ -54,15 +60,50 @@ class Database:
                   ''')
 
       con.execute('''
+                  CREATE TABLE user_action_log(
+                    ID INTEGER PRIMARY KEY NOT NULL,
+                    acting_user CHAR(30) NOT NULL,
+                    user CHAR(30),
+                    action CHAR(30) NOT NULL,
+                    timestamp CHAR(16) NOT NULL
+                  );
+                  ''') 
+      
+      con.execute('''
                   INSERT INTO users(username, password, level)
                   VALUES(?, ?, ?)
                   ''', ("System", "root", 3))
+
+      con.execute('''
+                  INSERT INTO users(username, password, level)
+                  VALUES(?, ?, ?)
+                  ''', ("Admin", "root", 2))
+
+      con.execute('''
+                  INSERT INTO users(username, password, level)
+                  VALUES(?, ?, ?)
+                  ''', ("Guest", "root", 1))
+
+      super_admins = ["JakeJR0", "squashedbanana2", "MStreet5"]
+      
+      for i in super_admins:
+        con.execute('''
+                  INSERT INTO users(username, password, level)
+                  VALUES(?, ?, ?)
+                  ''', (i, "root", 3))
       
       con.commit()
       
-    except:
+    except Exception as e:
       if self._remove_on_setup_failure:
-        os.remove(f"{self._db_name}.{_database_file_extention}")
+        if os.path.exists(f"{self._db_name}.{_database_file_extention}"):
+          os.remove(f"{self._db_name}.{_database_file_extention}")
+          
+        if os.path.exists("{}.db-journal".format(self._db_name)):
+          os.remove("{}.db-journal".format(self._db_name))
+      print("Database Error: {}".format(e))
+      raise DatabaseStatupFailure(e)
+      
 
   def __del__(self):
     try:
@@ -103,7 +144,7 @@ class Database:
         # it creates a database connection.
         return
         
-      setup = os.path.exists(db_name)
+      setup = os.path.exists("{}.{}".format(db_name, _database_file_extention))
       self._con = sqlite3.connect(f"{db_name}.{_database_file_extention}")
       self._db_name = db_name
       if not setup:
