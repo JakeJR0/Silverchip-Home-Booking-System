@@ -230,6 +230,10 @@ class Application:
       self._select_page(self._admin_page)
     else:
       box.showwarning("Access Denied", "You are not authorised to access this area.")
+
+  def _open_system_analytics(self):
+    self._select_page(self._system_analytics_page)
+    print("Opened")
   
   def __init__(self):
     self._pages = []
@@ -255,11 +259,12 @@ class Application:
     manage_accounts_page = self._create_page()
     new_accounts_page = self._create_page()
     new_password_page = self._create_page()
+    system_analytics_page = self._create_page()
     
     background.place(x=0, y=0)
     self._manage_accounts_page = manage_accounts_page
     self._new_accounts_page = new_accounts_page
-    self._new_password_page = new_password_page
+    self._system_analytics_page = system_analytics_page
 
     # New password page
     # Username Label
@@ -448,15 +453,18 @@ class Application:
 #admin page    
     
     manage_bookings = tkinter.Button(admin_page, text = "Manage Bookings", command="", height=1, width=20, font=fnt.Font(size=25), anchor='w')
+    
     manage_bookings.grid(column=0, row=3, padx=5, pady=3)
     
 
     manage_accounts = tkinter.Button(admin_page, text= "Manage Accounts",  command=self._go_to_manage_accounts, height=1, width=20, font=fnt.Font(size=25), anchor='w')
     manage_accounts.grid(column=0, row=4, padx=5, pady=3)
 
+    system_analytics = tkinter.Button(admin_page, text= "System Analytics",command=self._open_system_analytics, height=1, width=20, font=fnt.Font(size=25), anchor='w')
+    system_analytics.grid(column=0, row=5, padx=5, pady=3)
+    
     return_menu = tkinter.Button(admin_page, text= "Return To Menu",command=self._go_to_main_menu, height=1, width=20, font=fnt.Font(size=25), anchor='w')
-    return_menu.grid(column=0, row=5, padx=5, pady=3)
-
+    return_menu.grid(column=0, row=6, padx=5, pady=3)
     self._admin_page = admin_page
 
 

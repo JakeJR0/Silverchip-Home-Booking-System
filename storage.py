@@ -67,7 +67,14 @@ class Database:
                     action CHAR(30) NOT NULL,
                     timestamp CHAR(16) NOT NULL
                   );
-                  ''') 
+                  ''')
+
+      con.execute('''
+                  CREATE TABLE holiday_prices(
+                    month INTEGER(2) PRIMARY KEY NOT NULL,
+                    price REAL(5) NOT NULL
+                  );
+                  ''')
       
       con.execute('''
                   INSERT INTO users(username, password, level)
@@ -91,7 +98,27 @@ class Database:
                   INSERT INTO users(username, password, level)
                   VALUES(?, ?, ?)
                   ''', (i, "root", 3))
-      
+
+      month_prices = {
+        1: 1,
+        2: 2,
+        3: 3,
+        4: 4,
+        5: 5,
+        6: 6,
+        7: 7,
+        8: 8,
+        9: 9,
+        10: 10,
+        11: 11,
+        12: 12
+      }
+        
+      for month_id in month_prices:
+        self._con.execute('''
+                              INSERT INTO holiday_prices(month, price)
+                              VALUES(?,?)''', (month_id, month_prices[month_id]))
+        
       con.commit()
       
     except Exception as e:

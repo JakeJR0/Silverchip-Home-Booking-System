@@ -142,7 +142,6 @@ class User:
       return False
   
   def __del__(self):
-    print("Deleted user with username: {}".format(self._username))
     pass
 
   @property
@@ -268,6 +267,9 @@ class UserManager:
     row_list = []
     for row in rows:
       row_list.append(row[0])
+
+    if len(row_list) == 0:
+      row_list.append("")
       
     return row_list
 
@@ -278,6 +280,9 @@ class UserManager:
     row_list = []
     for row in rows:
       row_list.append(row[0])
+
+    if len(row_list) == 0:
+      row_list.append("")
       
     return row_list
 
@@ -287,6 +292,9 @@ class UserManager:
     row_list = []
     for row in rows:
       row_list.append(row[0])
+
+    if len(row_list) == 0:
+      row_list.append("")
       
     return row_list
 
