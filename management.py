@@ -2,42 +2,45 @@ from datetime import datetime
 
 _database = None
 
-class IncorrectFormatedDate(ValueError):
+class IncorrectFormatedDateAndTime(ValueError):
   pass
 
-class IncorrectHour(ValueError):
-  pass
 
-class FormattedTime:
+class FormattedTimeAndDate:
 
   @property
   def date(self):
-    return self._date
+    return self._datetime
 
   @property
   def hour(self):
-    return self._hour
+    return int(self._hour)
 
   @property
   def minute(self):
-    return self._min
-  
-  def __init__(self, date="", hour="", min=""):
-    pass
+    return int(self._min)
 
+  def __del__(self):
+    pass
+  
+  def __init__(self, date="", hour=0, min=0):
     if int(hour) > 23:
-      pass
+      raise IncorrectFormatedDateAndTime("The hour parameter is greater than 23.")
+    elif int(hour) < 0:
+      raise IncorrectFormatedDateAndTime("The hour parameter is less than 0.")
       
-    if int(min) > 60:
-      raise 
+    if date == "":
+      raise IncorrectFormatedDateAndTime("The Date parameter is empty.")
+      
+    hour = str(hour)
+    min = str(min)
+    
     combined_string = "{} {}:{}".format(date, hour, min)
     try:
-      self._datetime = datetime.strftime(combined_string, "%d/%m/%Y %H:%M")
-    except:
-      raise IncorrectFormatedDate("Please provided the date with the date as DD/MM/YYYY.")
+      self._datetime = datetime.strptime(combined_string, "%d/%m/%Y %H:%M")
+    except ValueError as r:
+      raise IncorrectFormatedDateAndTime(r)
 
-    
-    self._date = date
     self._hour = hour
     self._min = min
 
@@ -59,7 +62,7 @@ class Booking:
 
     return start_id
     
-  def __init__(self, start_time=FormattedTime, end_time = FormattedTime):
+  def __init__(self, start_time=FormattedTimeAndDate, end_time = FormattedTimeAndDate):
     pass
 
 class BookingManagement:
@@ -155,7 +158,7 @@ class User:
   def logged_in(self):
     return self._logged_in
 
-  @property
+  @logged_in.setter
   def logged_in(self, value=False):
     if value == False:
       self._logged_in = False 
@@ -249,12 +252,18 @@ class UserManager:
   @classmethod
   def remove_user(self, admin_user=User, user_to_remove=User):
     if admin_user.logged_in:
-      if admin_user.level > user_to_remove.level:
-        username = user_to_remove.username
-        _database.con.execute('''
-                              DELETE FROM users
-                              WHERE username=?
-                              ''', (username))
+      if admin_user.level > user_to_remove.level and admin_user.username != user_to_remove.username:
+        try:
+          username = user_to_remove.username
+          _database.con.execute('''
+                                DELETE FROM users
+                                WHERE username=?
+                                ''', (username,))
+          _database.save()
+          del user_to_remove
+          return True
+        except Exception as e:
+          return e
       else:
         raise PermissionDenied("You are not authorised to modify this account.")
     else:
@@ -304,9 +313,9 @@ class UserManager:
     if not admin_user.logged_in:
       raise PermissionDenied("Admin user is not logged in.")
       
-    if user.level > admin_level:
+    if user.level > 2:
       raise InvalidAccountLevel("Level provided is too high as it does not meet the current level systems standards.")
-    elif user.level < guest_level:
+    elif user.level < 1:
       raise InvalidAccountLevel(f"The Level provided is too low as the minimum level is {guest_level}")
 
     if admin_user.super_admin and admin_user.level > user.level:
@@ -379,3 +388,4 @@ def setup(database=None, test=False):
   _database = database
   
   return True
+  

@@ -4,6 +4,20 @@ import sqlite3
 import os
 
 _database_file_extention = "db"
+month_prices = {
+    1: 125,
+    2: 125,
+    3: 125,
+    4: 125,
+    5: 200,
+    6: 200,
+    7: 200,
+    8: 200,
+    9: 150,
+    10: 150,
+    11: 150,
+    12: 150
+  }
 
 class DatabaseNamingError(ValueError):
   """
@@ -28,13 +42,18 @@ class Database:
   
   _auto_save = True
   _remove_on_setup_failure = True
-  
+  active_count = 0
+
   @property
   def con(self):
     return self._con
     
   def save(self):
-    self._con.commit()
+    try:
+      self._con.commit()
+      return True
+    except:
+      return False
     
   def _setup(self):
     try:
@@ -99,20 +118,7 @@ class Database:
                   VALUES(?, ?, ?)
                   ''', (i, "root", 3))
 
-      month_prices = {
-        1: 1,
-        2: 2,
-        3: 3,
-        4: 4,
-        5: 5,
-        6: 6,
-        7: 7,
-        8: 8,
-        9: 9,
-        10: 10,
-        11: 11,
-        12: 12
-      }
+
         
       for month_id in month_prices:
         self._con.execute('''
@@ -136,16 +142,24 @@ class Database:
     try:
       if self._auto_save:
         self._con.commit()
-
       self._con.close()
+
+      if self._delete_on_close:
+        if os.path.exists(os.path.exists("{}.{}".format(self._db_name, _database_file_extention))):
+          os.remove("{}.{}".format(self._db_name, _database_file_extention))
     except:
       pass
+
+    if not self._test_mode:
+      Database.active_count -= 1
   
-  def __init__(self, db_name="", test_mode=False):
+  def __init__(self, db_name="", test_mode=False, delete_on_close=False):
+      self._test_mode = test_mode
+    
       # Slices the name to isolate
       # any extention within the file
       # name.
-    
+      
       file_name_extention = db_name[:-len(_database_file_extention)]
 
       # Checks if the file file
@@ -161,7 +175,7 @@ class Database:
         raise DatabaseNamingError("No File Name has been provided, please specify a file name.")
       elif len(db_name) > 20:
         raise DatabaseNamingError("File Name provided is longer than 20 characters, please choose a shorter name.")
-      elif len(db_name) < 3:
+      elif len(db_name) <= 3:
         raise DatabaseNamingError("File Name provided is too short.")
       elif not db_name.isalpha():
         raise DatabaseNamingError("File Name includes forbidden characters.")
@@ -174,6 +188,12 @@ class Database:
       setup = os.path.exists("{}.{}".format(db_name, _database_file_extention))
       self._con = sqlite3.connect(f"{db_name}.{_database_file_extention}")
       self._db_name = db_name
+      self._delete_on_close = delete_on_close
+    
       if not setup:
         self._setup()
+
+      Database.active_count += 1
+
+
       

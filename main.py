@@ -26,7 +26,7 @@ class Application:
   _app_size_y = 500
   
   def close(self):
-    self._root.destroy()
+    del self
 
   def __del__(self):
     try:
@@ -72,10 +72,8 @@ class Application:
     for page in self._pages:
       if page == selected_page:
         page.pack()
-        print("Packed ", page)
       else:
         page.pack_forget()
-        print("Unpacked ", page)
         
   def _logout(self):
     failed = False
@@ -216,13 +214,52 @@ class Application:
 
     self._booking_availability.after(3000, self._hide_booking_status_message)
 
-  def _create_account_action(self):
-    pass # Alex
+  def _create_account_action(self): 
+    new_account_permission_level = self._new_page_level.get()
+    level = 0
+    if new_account_permission_level == "Guest":
+      level = 1
+    elif new_account_permission_level == "Admin":
+      level = 2
+    else:
+      level = 10
+      
+    new_account_username= self._new_page_name_entry.get()
+    new_account_password= self._new_page_pass_entry.get()
+    self._new_page_name_entry.delete(0, END)
+    self._new_page_pass_entry.delete(0, END)
+    
+    new_user = management.User(new_account_username,  new_account_password, level)
+    success = management.UserManager.create(self._user, new_user, new_account_password)
+    if success:
+      box.showinfo("User Created", "User {} with password {} has been created with level {} access.".format(new_account_username, new_account_password, new_account_permission_level))
+
+      if level == 1:
+        self._guest_list.insert(END, new_account_username)
+      elif level == 2:
+        self._admin_list.insert(END, new_account_username)
+      
+      self._go_to_manage_accounts()
+      
 
   def _remove_account_action(self):
     account_details = self._get_account()
-    user_to_remove = management.User(account_details["name"])     
-    management.UserManager.remove_user(self._user, user_to_remove)
+    user_to_remove = management.User(account_details["name"])  
+    
+    result = False
+    
+    try:
+      result = management.UserManager.remove_user(self._user, user_to_remove)
+    except management.PermissionDenied as reason:
+      box.showwarning("Permission Denied", reason)
+    except:
+      pass
+      
+    if result:
+      if account_details["type"] == "guest":
+        self._guest_list.delete(account_details["position"])
+      elif account_details["type"] == "admin":
+        self._admin_list.delete(account_details["position"])
     
   def _open_admin_panel(self):
     print("Username: {} Level: {}".format(self._user.username, self._user.level))
@@ -239,8 +276,10 @@ class Application:
     self._pages = []
     self._db = None
     self._root = Tk()
+    bg = PhotoImage(file = "background.png")
     self._root.geometry("800x500") # Sets size of window
     self._menu = Menu(self._root, tearoff=0)
+    self._menu.add_command(label="Return to main menu", command=lambda: self._select_page(self._main_menu))
     self._root.title('Booking System')  # Set name of window
     # Set background
     img = PhotoImage(file="")  # Select background image
@@ -260,6 +299,8 @@ class Application:
     new_accounts_page = self._create_page()
     new_password_page = self._create_page()
     system_analytics_page = self._create_page()
+
+    
     
     background.place(x=0, y=0)
     self._manage_accounts_page = manage_accounts_page
@@ -276,7 +317,7 @@ class Application:
     # Enter new password
     self._new_pass_label = Label(new_password_page, text="Enter new password:")
     self._new_pass_label.grid(column=0, row=2, padx=(0,180), pady=(30,0))
-    self._new_pass_entry = Entry(new_password_page, width=30)
+    self._new_pass_entry = Entry(new_password_page, width=30, show="*")
     self._new_pass_entry.grid(column=0, row=3)
 
     # Confirm new password
@@ -353,7 +394,7 @@ class Application:
 
     # Check in time box
     self._check_in_label = Label(make_booking, text="Check in time:")
-    self._check_in_label.grid(row=2, column=0, padx=(0,0), pady=(15,0))
+    self._check_in_label.grid(row=3, column=0, padx=(0,0), pady=(0,45))
     # Hour
     check_in_hour = tkinter.StringVar(value="0")
     self._check_in_time_hour = tkinter.Spinbox(make_booking, from_=0, to=23, textvariable=check_in_hour, wrap=True, width=3)
@@ -372,7 +413,7 @@ class Application:
     
     # Check out time box
     self._check_out_label = Label(make_booking, text="Check out time:")
-    self._check_out_label.grid(row=2, column=1, padx=(0,0), pady=(15,0))
+    self._check_out_label.grid(row=3, column=1, padx=(0,0), pady=(0,45))
     # Hour
     check_out_hour = tkinter.StringVar(value="0")
     self._check_out_time_hour = tkinter.Spinbox(make_booking, from_=0, to=23, textvariable=check_out_hour, wrap=True, width=3)
@@ -389,7 +430,6 @@ class Application:
     self._out_min_label = Label(make_booking, text="Min")
     self._out_min_label.grid(row=3, column=1, padx=(50,0), pady=(45,0))
     
-    # Booking details box
     # Start and end date
     start_date = tkinter.Label(make_booking, textvar=self._start_date_entry.get())
     start_date.grid(row=4, column=0)  # Start
@@ -405,18 +445,45 @@ class Application:
     check_in_time.grid(row=4, column=0)  # Hour
     check_out_time = tkinter.Label(make_booking, textvar=self._check_in_time_min.get())
     check_out_time.grid(row=4, column=1)  # Minute
+
+    
+    # Information input
+    # Name input
+    full_name_entry_label = tkinter.Label(make_booking, text="Full name:")
+    full_name_entry_label.grid(row=6, column=0, padx=(0,110))
+    full_name_entry = tkinter.Entry(make_booking)
+    full_name_entry.grid(row=7, column=0)
+
+    # Address input
+    address_entry_label = tkinter.Label(make_booking, text="Postcode:")
+    address_entry_label.grid(row=6, column=1, padx=(0,115))
+    address_entry = tkinter.Entry(make_booking)
+    address_entry.grid(row=7, column=1)
+
+    # Number input
+    number_entry_label = tkinter.Label(make_booking, text="Phone number:")
+    number_entry_label.grid(row=8, column=0, padx=(0,80))
+    number_entry = tkinter.Entry(make_booking)
+    number_entry.grid(row=9, column=0)
+
+    # Email input
+    email_label = tkinter.Label(make_booking, text="Email:")
+    email_label.grid(row=8, column=1, padx=(0,135))
+    email_entry = tkinter.Entry(make_booking)
+    email_entry.grid(row=9, column=1)
+
     
     # Book Button
     book_button = tkinter.Button(make_booking, text= "Book",command="", height=1, anchor='w')
-    book_button.grid(column=0, row=6, pady=50)
+    book_button.grid(column=0, row=10, pady=50, padx=(0,100))
 
     # Check Button
     check_button = tkinter.Button(make_booking, text= "Check",command=self._check_booking_availability, height=1, anchor='w')
-    check_button.grid(column=1, row=6, pady=50)
+    check_button.grid(column=0, row=10, pady=50, padx=(100,0))
         
     # Exit button
     return_menu = tkinter.Button(make_booking, text= "Return To Menu",command=self._go_to_main_menu, height=1, anchor='w')
-    return_menu.grid(column=2, row=6, pady=50)
+    return_menu.grid(column=1, row=10, pady=50)
     
     
     # Main menu page
@@ -513,34 +580,42 @@ class Application:
     return_to_menu.grid(column=1, row = 2, padx = (250,0), pady = 60)
     self._booking_availability = tkinter.Label(self._make_booking, text="")
       #new account page
+    permission_level = 1 
+    self._new_page_level = StringVar(new_accounts_page)
+    self._new_page_level.set("Guest") 
+    new_page_admin_check = OptionMenu(new_accounts_page, self._new_page_level, *["Admin", "Guest"]) 
+    new_page_admin_check.grid(column = 1, row =4)
 
     new_page_ID_text = Label(new_accounts_page, text="Enter New User ID:")
     new_page_ID_text.grid(row=0, column=1)
                             
     new_page_name_entry = Entry(new_accounts_page,text = "")
     new_page_name_entry.grid(row = 0, column = 2)
-
+    self._new_page_name_entry = new_page_name_entry
     new_page_pass_text= Label(new_accounts_page, text="Enter New Password:")
     new_page_pass_text.grid(row = 1, column = 1)
 
     new_page_pass_entry = Entry(new_accounts_page, text = "")
     new_page_pass_entry.grid(row = 1, column = 2)
-
+    self._new_page_pass_entry = new_page_pass_entry
     menu_button = tkinter.Button(new_accounts_page, text= "Exit", command=self._go_to_main_menu, anchor='w')
     menu_button.grid(column=1, row=2)
 
-    new_page_submit_button = Button(new_accounts_page, text = "Submit", command = self._new_account_page_submit)
+    new_page_submit_button = Button(new_accounts_page, text = "Submit", command = self._create_account_action) 
     new_page_submit_button.grid(row = 4, column = 2)
-
     
     
+    
+    
+    # This wont work needs to be in a function / hooked to access
+    # self._user
 
+    
    # new_user_name = new_page_name_entry.get()
    # new_user = management.User("Username", new_user_name, permission_level=2,)
     #success = management.UserManager.create(self._user, new_user, "password")
     self._select_page(self._login_page)
     self._root.mainloop()
-
 
 
 
