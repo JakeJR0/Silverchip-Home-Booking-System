@@ -1,2 +1,2 @@
 language = "python3"
-run = "pytest; python main.py"
+run = "flake8; pytest; python main.py"

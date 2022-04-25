@@ -102,9 +102,36 @@ class Application:
           self._admin_list.insert(END, user.username)
         elif user.level == 2:
           self._guest_list.insert(END, user.username)
-          
+
+  def _book_stay(self):
+    start_date = self._start_date_entry.get_date()
+    start_date_hour = self
+    end_date = self._end_date_entry.get_date()
+
+    try:
+      start_date = str(start_date).replace("-", "/")
+      start_date = "{}/{}/{}".format(start_date[8:10], start_date[5:7], start_date[0:4]) 
+
+      end_date = str(end_date).replace("-", "/")
+      end_date = "{}/{}/{}".format(end_date[8:10], end_date[5:7], end_date[0:4])
+
+      hour = self._check_in_hour.get()
+      mins = self._check_in_min.get()
+
+      start_date = management.FormattedTimeAndDate(start_date, int(hour), int(mins))
+      end_date = management.FormattedTimeAndDate(end_date, int(18), int(0))
+      
+    except management.IncorrectFormatedDateAndTime as e:
+        box.showwarning("Date Invalid", e)
+    except Exception as e:
+      print(e)
+    if type(number_entry) != int:
+      box.showwarning("Number error","Please enter a valid phone number...")
+    elif len(number_entry) != 11:
+      box.showwarning("Number error","Please enter a valid phone number...")
     
-    
+
+      
   
   def _get_account(self):
     account = {
@@ -141,8 +168,25 @@ class Application:
 
   def _new_account_page_submit(self, event=None):
     new_user_name = self._new_page_name_entry.get()
-    new_user = management.User("Username", new_user_name, permission_level=2,)
-    success = management.UserManager.create(self._user, new_user, "password")
+    new_user_pass = self._new_page_pass_entry.get()
+    
+    if len(new_user_name) >= 16:
+      box.showwarning("Username is too large, please choose a username under 16 characters.")
+      return 
+    elif len(new_user_name) <= 3:
+      
+      box.showwarning("Username Error", "Username is too short, please choose a longer username. (3 + Characters)")
+      return 
+  
+    if len(new_user_pass) >= 16:
+      box.showwarning("Password Error", "Password is too large, please choose a password under 16 characters.")
+      return 
+    elif len(new_user_pass) <= 3:
+      box.showwarning("Password Error", "Password is too short, please choose a longer password. (8 + Characters)")
+      return 
+      
+    new_user = management.User(new_user_name, permission_level=2)
+    success = management.UserManager.create(self._user, new_user, new_user_pass)
     creation_successful= tkinter.Label(main_menu, text="Account Creation Successful", font=('Helvetica', 12), fg='green')
     creation_successful.grid(row=1, column=3, padx=(274, 0))
     return
@@ -151,6 +195,13 @@ class Application:
   def _login_page_submit(self, event=None):
     username = self._login_page_name_entry.get()
     password = self._login_page_pass_entry.get()
+
+    
+    
+
+    
+
+    
 
     self._login_page_name_entry.delete(0, END)
     self._login_page_pass_entry.delete(0, END)
@@ -195,6 +246,12 @@ class Application:
  
   def _go_to_new_password_page(self, event=None):
     self._select_page(self._new_password_page)
+
+  def _go_to_view_booking_page(self, event=None):
+    self._select_page(self._view_booking_page)
+
+  def _go_to_manage_booking_page(self, event=None):
+    self._select_page(self._manage_booking_page)
 
   def _hide_booking_status_message(self, event=None):
     self._booking_availability.config(text="")
@@ -299,8 +356,10 @@ class Application:
     new_accounts_page = self._create_page()
     new_password_page = self._create_page()
     system_analytics_page = self._create_page()
-
-    
+    view_booking_page = self._create_page()
+    manage_booking_page = self._create_page()
+    self._view_booking_page = view_booking_page
+    self._manage_booking_page = manage_booking_page
     
     background.place(x=0, y=0)
     self._manage_accounts_page = manage_accounts_page
@@ -397,6 +456,7 @@ class Application:
     self._check_in_label.grid(row=3, column=0, padx=(0,0), pady=(0,45))
     # Hour
     check_in_hour = tkinter.StringVar(value="0")
+    
     self._check_in_time_hour = tkinter.Spinbox(make_booking, from_=0, to=23, textvariable=check_in_hour, wrap=True, width=3)
     self._check_in_time_hour.grid(row=3, column=0, padx=(0,50))
     
@@ -407,6 +467,8 @@ class Application:
     check_in_min = tkinter.StringVar(value=0)
     self._check_in_time_min = tkinter.Spinbox(make_booking, from_=0, to=59, textvariable=check_in_min, wrap=True, width=3)
     self._check_in_time_min.grid(row=3, column=0, padx=(50,0))
+    self._check_in_min = check_in_min
+    self._check_in_hour = check_in_hour
     
     self._in_min_label = Label(make_booking, text="Min")
     self._in_min_label.grid(row=3, column=0, padx=(50,0), pady=(45,0))
@@ -453,12 +515,17 @@ class Application:
     full_name_entry_label.grid(row=6, column=0, padx=(0,110))
     full_name_entry = tkinter.Entry(make_booking)
     full_name_entry.grid(row=7, column=0)
+    
+
+    
+    
 
     # Address input
     address_entry_label = tkinter.Label(make_booking, text="Postcode:")
     address_entry_label.grid(row=6, column=1, padx=(0,115))
     address_entry = tkinter.Entry(make_booking)
     address_entry.grid(row=7, column=1)
+  
 
     # Number input
     number_entry_label = tkinter.Label(make_booking, text="Phone number:")
@@ -466,16 +533,29 @@ class Application:
     number_entry = tkinter.Entry(make_booking)
     number_entry.grid(row=9, column=0)
 
+    
+
+    
+
     # Email input
     email_label = tkinter.Label(make_booking, text="Email:")
     email_label.grid(row=8, column=1, padx=(0,135))
     email_entry = tkinter.Entry(make_booking)
     email_entry.grid(row=9, column=1)
 
-    
+    # Amount of pets input
+    pet_ammount = tkinter.StringVar(value=0)
+    pet_ammount_label = Label(make_booking, text="Number of pets:")
+    pet_ammount_label.grid(column=1, row=8, padx=(380,0))
+    pet_ammount_entry = tkinter.Spinbox(make_booking, from_=0, to=2, textvariable=pet_ammount, wrap=True, width=3)
+    pet_ammount_entry.grid(column=1, row=9, padx=(300,0))
+
     # Book Button
-    book_button = tkinter.Button(make_booking, text= "Book",command="", height=1, anchor='w')
+    book_button = tkinter.Button(make_booking, text= "Book",command=self._book_stay, height=1, anchor='w')
+   
     book_button.grid(column=0, row=10, pady=50, padx=(0,100))
+
+    
 
     # Check Button
     check_button = tkinter.Button(make_booking, text= "Check",command=self._check_booking_availability, height=1, anchor='w')
@@ -484,7 +564,40 @@ class Application:
     # Exit button
     return_menu = tkinter.Button(make_booking, text= "Return To Menu",command=self._go_to_main_menu, height=1, anchor='w')
     return_menu.grid(column=1, row=10, pady=50)
+
+    # View booking page
+    # Contents of Page
+    bookings_list_label = Label(view_booking_page, text="Please select a booking:")
+    bookings_list_label.grid(column=0, row=0)
     
+    bookings_list = Listbox(view_booking_page, height=15, width = 50)
+    bookings_list.grid(column=0, row=1)
+    
+    view_button = Button(view_booking_page, text="View", command="")
+    view_button.grid(column=0, row=2, padx=(0,290), pady=15)
+
+    exit_button = Button(view_booking_page, text="Exit", command=lambda:self._select_page(self._main_menu))
+    exit_button.grid(column=0, row=2, padx=(290,0), pady=15)
+    # Manage booking page
+    # Contents of Page
+    bookings_list_label = Label(manage_booking_page, text="Please select a booking:")
+    bookings_list_label.grid(column=0, row=0)
+    
+    bookings_list = Listbox(manage_booking_page, height=15, width = 50)
+    bookings_list.grid(column=0, row=1)
+    
+    view_button = Button(manage_booking_page, text="View", command="")
+    view_button.grid(column=0, row=2, padx=(0,400), pady=15)
+
+    edit_button = Button(manage_booking_page, text="Edit", command="")
+    edit_button.grid(column=0, row=2, padx=(0,145), pady=15)
+
+    delete_button = Button(manage_booking_page, text="Delete", command="")
+    delete_button.grid(column=0, row=2, padx=(145,0), pady=15)
+
+    exit_button = Button(manage_booking_page, text="Exit", command=lambda:self._select_page(self._main_menu))
+    exit_button.grid(column=0, row=2, padx=(400,0), pady=15)
+
     
     # Main menu page
     main_menu = self._create_page()
@@ -492,7 +605,7 @@ class Application:
     img_label_main_menu.place(x=0, y=0)
     # Contents of the page
     # View booking button
-    view_booking_button = tkinter.Button(main_menu, text="  View Bookings", command="", height=1, width=20, font=fnt.Font(size=25), anchor='w')
+    view_booking_button = tkinter.Button(main_menu, text="  View Bookings", command=self._go_to_view_booking_page, height=1, width=20, font=fnt.Font(size=25), anchor='w')
     view_booking_button.grid(column=0, row=2, padx=5, pady=(145, 3))
 
     # Make a booking button
@@ -510,7 +623,7 @@ class Application:
     
 
     admin_true = tkinter.Label(main_menu, text="Loading", font=('Helvetica', 12), fg='green')
-    admin_true.grid(row=1, column=3, padx=(274, 0))
+    admin_true.grid(row=1, column=3, padx=(150, 0))
 
     self._admin_label = admin_true
     
@@ -519,16 +632,13 @@ class Application:
 
 #admin page    
     
-    manage_bookings = tkinter.Button(admin_page, text = "Manage Bookings", command="", height=1, width=20, font=fnt.Font(size=25), anchor='w')
+    manage_bookings = tkinter.Button(admin_page, text = "Manage Bookings", command=self._go_to_manage_booking_page, height=1, width=20, font=fnt.Font(size=25), anchor='w')
     
     manage_bookings.grid(column=0, row=3, padx=5, pady=3)
     
 
     manage_accounts = tkinter.Button(admin_page, text= "Manage Accounts",  command=self._go_to_manage_accounts, height=1, width=20, font=fnt.Font(size=25), anchor='w')
     manage_accounts.grid(column=0, row=4, padx=5, pady=3)
-
-    system_analytics = tkinter.Button(admin_page, text= "System Analytics",command=self._open_system_analytics, height=1, width=20, font=fnt.Font(size=25), anchor='w')
-    system_analytics.grid(column=0, row=5, padx=5, pady=3)
     
     return_menu = tkinter.Button(admin_page, text= "Return To Menu",command=self._go_to_main_menu, height=1, width=20, font=fnt.Font(size=25), anchor='w')
     return_menu.grid(column=0, row=6, padx=5, pady=3)
@@ -592,12 +702,15 @@ class Application:
     new_page_name_entry = Entry(new_accounts_page,text = "")
     new_page_name_entry.grid(row = 0, column = 2)
     self._new_page_name_entry = new_page_name_entry
+
+
     new_page_pass_text= Label(new_accounts_page, text="Enter New Password:")
     new_page_pass_text.grid(row = 1, column = 1)
 
     new_page_pass_entry = Entry(new_accounts_page, text = "")
     new_page_pass_entry.grid(row = 1, column = 2)
     self._new_page_pass_entry = new_page_pass_entry
+
     menu_button = tkinter.Button(new_accounts_page, text= "Exit", command=self._go_to_main_menu, anchor='w')
     menu_button.grid(column=1, row=2)
 

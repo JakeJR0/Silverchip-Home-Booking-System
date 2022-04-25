@@ -8,8 +8,8 @@ authors = ["JakeJR0 <<>>"]
 python = "^3.8"
 tkcalendar = "^1.6.1"
 pytest = "^7.1.1"
-tox = "^3.25.0"
 itimg = "^0.1"
+flake8 = "^4.0.1"
 
 [tool.poetry.dev-dependencies]
 

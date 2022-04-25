@@ -5,7 +5,6 @@ _database = None
 class IncorrectFormatedDateAndTime(ValueError):
   pass
 
-
 class FormattedTimeAndDate:
 
   @property
