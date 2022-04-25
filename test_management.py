@@ -180,3 +180,9 @@ class TestFormattedTimeAndDate:
 
         with pytest.raises(IncorrectFormattedDateAndTime):
             assert FormattedTimeAndDate("04/22/2022", 16, 58), "The formatted time class accepted a US style date."
+
+class TestFormattedTimeAndDate:
+
+  def test___init__(self):
+    # This tests that the class will only accept valid parameters.
+    pass

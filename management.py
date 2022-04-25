@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 
 _database = None
 
@@ -45,6 +45,41 @@ class FormattedTimeAndDate:
         self._hour = hour
         self._min = min
 
+class FormattedUserBookingData:
+  """
+    Used to store booking information about a user.
+  """
+
+  @property
+  def first_name(self):
+    return self._first_name
+
+  @property
+  def last_name(self):
+    return self._last_name
+
+  @property
+  def phone_number(self):
+    return self._phone_number
+
+  @property
+  def email(self):
+    return self._email
+
+  @property
+  def pets(self):
+    return self._pets
+  
+  def __del__(self):
+    pass
+
+  def __init__(self, first_name="", last_name="", postcode="", email="", phone_number="", pets=0):
+    self._first_name, self._last_name = first_name, last_name
+    self._postcode = postcode
+    self._email = email
+    self.phone_number = phone_number
+    self._pets = pets
+    
 
 class Booking:
     """
@@ -54,7 +89,7 @@ class Booking:
       to integrate with the database and the
       application.
     """
-
+    
     def _get_booking_id(self):
         start_id = 100000
         for row in _database.con.execute("SELECT MAX(ID) + 1 AS new_id FROM bookings"):
@@ -62,20 +97,128 @@ class Booking:
 
         return start_id
 
-    def __init__(self, start_time=FormattedTimeAndDate, end_time=FormattedTimeAndDate):
+    @property
+    def start(self):
+      return self.start_date
+
+    @property
+    def end(self):
+      return self._end_date
+
+    @property
+    def user(self):
+      return self._user_data
+
+    @property
+    def cost(self):
+      total_cost = 0
+      total_days = self._start_date.date - self._end_date.date
+      days = total_days.days()
+      month_prices = {
+        
+      }
+      for row in _database.con.execute("SELECT month, price FROM holiday_prices"):
+        month_prices[row[0]] = row[1]
+        
+      for day in range(0, days):
+        current_day = self._start_date + timedelta(days=day)
+        current_day = current_day.strftime("%d/%m/%Y")
+        current_month = int(current_day[3:4])
+        current_day_cost = month_prices[current_month]
+        total_cost += current_day_cost
+
+      pet_cost = self._user_data.pets * 25
+      total_cost += pet_cost
+      
+      return total_cost
+
+      
+    def _valid_start_and_end(self, start=FormattedTimeAndDate, end=FormattedTimeAndDate):
+      return True
+
+    def _remove_item(self, item=None):
+      try:
+        del item
+      except:
         pass
+  
+    def __del__(self):
+      items = [self._start_date, self._end_date, self._user_data]
+      for i in items:
+        self._remove_item(i)
+      
+    def __init__(self, start_time=FormattedTimeAndDate, end_time=FormattedTimeAndDate, user_data=FormattedUserBookingData, create=False, booking_id=0):
+
+      if not self._valid_start_and_end(start_time, end_time):
+        raise IncorrectFormattedDateAndTime("The times provided are not valid.")
+        return
+        
+      self._start_date = start_time
+      self._end_date = end_time
+      self._user_data = user_data
+      self._booking_id = booking_id
+
+      if create:
+        try:
+          start = self._start_date.strftime("%d/%m/%Y")
+          end = self._end_date.strftime("%d/%m/%Y")
+          start = "{} {}:{}".format(start, start_time.hour, start_time.minute)
+          end = "{} {}:{}".format(end, end_time.hour, end_time.minute)
+          bid = 0
+          if booking_id != 0:
+            bid = booking_id
+          else:
+            bid = self._get_booking_id()
+            
+          data = (bid, user_data.first_name, user_data.last_name, user_data.phone_number, user_data.email, user_data._postcode, user_data.pets, start, end)
+          
+          _database.con.execute('''
+                                INSERT INTO bookings 
+                                (ID, first_name, last_name, mobile_number, email_address, postcode, pets, start_time, end_time)
+                                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+                                ''', data)
+          _database.save()
+        except:
+          pass
 
 
 class BookingManagement:
-
+  
     @classmethod
-    def booking_count():
+    def booking_count(self):
         count = 0
-        for i in _database.con.execute("SELECT ID FROM bookings"):
-            count += 1
+        for count_db in _database.con.execute("SELECT COUNT(ID) FROM bookings"):
+            count_db = count
 
         return count
 
+    @classmethod
+    def get_bookings(self):
+      bookings = []
+      
+      for row in _database.con.execute("SELECT ID, first_name, last_name, mobile_number, email_address, postcode, start_time, end_time, pets FROM bookings"):
+        user_data = FormattedUserBookingData(first_name=row[1], last_name=row[2], phone_number=row[3], email=row[4], postcode=row[5], pets=row[8])
+
+        start_time_before_slicing = row[6]
+        start_time_date = start_time_before_slicing[0:10]
+        start_time_hour = start_time_before_slicing[11:13]
+        start_time_min = start_time_before_slicing[14:16]
+
+        end_time_before_slicing = row[7]
+        end_time_date = end_time_before_slicing[0:10]
+        end_time_hour = end_time_before_slicing[11:13]
+        end_time_min = end_time_before_slicing[14:16]
+        
+        start_time = FormattedTimeAndDate(start_time_date, start_time_hour, start_time_min)
+        end_time = FormattedTimeAndDate(end_time_date, end_time_hour, end_time_min)
+        
+        booking = Booking(start_time, end_time, user_data, booking_id=row[0])
+        bookings.append(booking)
+
+      return bookings
+
+    
+  
     def __del__(self):
         pass
 
@@ -351,32 +494,6 @@ class ManagementSetupFailure(SystemError):
     """
 
     pass
-
-
-class LogFailedRequirement(ValueError):
-    pass
-
-
-class Logs:
-
-    @classmethod
-    def _get_user_log_assignable_id(self):
-        for row in _database.con.execute("SELECT MAX(ID) + 1 as new_id FROM user_action_log"):
-            return row
-        return 1000000
-
-    @classmethod
-    def create_action_report(self, acting_user=User, user=User, action=""):
-        if len(action) >= 10:
-            log_id = self._get_assignable_id()
-            timestamp = datetime.now()
-            timestamp = timestamp.strftime("%d/%m/%Y %H:%M")
-            _database.con.execute('''
-                            INSERT INTO user_action_log(ID, acting_user, user, action, timestamp)
-                            VALUES(?,?,?,?,?)
-                          ''', (log_id, acting_user.username, user.username, action, timestamp))
-        else:
-            raise LogFailedRequirement("Action is below the minimum character requirements.")
 
 
 def setup(database=None, test=False):

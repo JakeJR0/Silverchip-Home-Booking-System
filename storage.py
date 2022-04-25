@@ -76,18 +76,10 @@ class Database:
                     last_name CHAR(30) NOT NULL,
                     mobile_number CHAR(11) NOT NULL,
                     email_address CHAR(50) NOT NULL,
-                    booking_date CHAR(10) NOT NULL,
-                    time CHAR(5) NOT NULL
-                  );
-                  ''')
-
-            con.execute('''
-                  CREATE TABLE user_action_log(
-                    ID INTEGER PRIMARY KEY NOT NULL,
-                    acting_user CHAR(30) NOT NULL,
-                    user CHAR(30),
-                    action CHAR(30) NOT NULL,
-                    timestamp CHAR(16) NOT NULL
+                    postcode CHAR(8) NOT NULL,
+                    pets INT(1) NOT NULL,
+                    start_time CHAR(16) NOT NULL,
+                    end_time CHAR(16) NOT NULL
                   );
                   ''')
 
