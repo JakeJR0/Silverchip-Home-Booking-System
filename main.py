@@ -114,7 +114,7 @@ class Application:
         booking.user.postcode = self._edit_selected_postcode_output.get()
         booking.end.hour = int(self._edit_selected_check_out_output_hour.get())
         booking.end.min = int(self._edit_selected_check_out_output_minute.get())
-        booking.full_name = self._edit_selected_full_name_output.get()
+        booking.user.name = self._edit_selected_full_name_output.get()
         booking.phone_number = self._edit_selected_phone_number_output.get()
         booking.user.email = self._edit_selected_email_output.get()
         booking.user.pets = int(self._edit_selected_pet_amount_output.get())
@@ -335,8 +335,7 @@ class Application:
           box.showwarning("Access Denied", "You are not authorised to access this area.")
           return
           
-        for item in self._bookings_list.curselection():
-          self._bookings_list.delete(item)
+        self._bookings_list.delete(0, END)
           
         bookings = management.BookingManagement.get_bookings()
         self._bookings_list_list = []
@@ -346,7 +345,7 @@ class Application:
           
           
         self._select_page(self._view_booking_page)
-
+  
     def _set_edit_selected_with_booking(self, booking=management.Booking):
       
       def format_time(time=""):
@@ -388,6 +387,24 @@ class Application:
       self._edit_selected_postcode_output.delete(0, END)
       self._edit_selected_pet_amount_output.delete(0, END)
       self._edit_selected_price_output.config(text="")
+
+    def _edit_selected_booking_delete(self):
+      booking = None
+      
+      for i in self._manage_bookings_list.curselection():
+        booking = self._manage_bookings_list_list[i]
+
+      if booking is None:
+        box.showwarning("No Booking Selected", "Please select a booking to view.")
+
+      success = booking.delete()
+
+      if success:
+        box.showinfo("Success", "Successfully deleted booking.")
+      else: # JJ
+        box.showwarning("Failed", "Failed to delete booking.")
+
+      self._go_to_main_menu()
   
     def _go_to_edit_selected_booking_page(self, event=None):
       booking = None
@@ -408,9 +425,8 @@ class Application:
         if not self._user.admin and not self._user.super_admin:
           box.showwarning("Access Denied", "You are not authorised to access this area.")
           return
-          
-        for item in self._manage_bookings_list.curselection():
-          self._manage_bookings_list.delete(item)
+
+        self._manage_bookings_list.delete(0, END)
           
         bookings = management.BookingManagement.get_bookings()
         self._manage_bookings_list_list = []
@@ -881,7 +897,7 @@ class Application:
         edit_button = Button(manage_booking_page, text="Edit", command=self._go_to_edit_selected_booking_page)
         edit_button.grid(column=0, row=2, padx=(0, 145), pady=15)
 
-        delete_button = Button(manage_booking_page, text="Delete", command="")
+        delete_button = Button(manage_booking_page, text="Delete", command=self._edit_selected_booking_delete)
         delete_button.grid(column=0, row=2, padx=(145, 0), pady=15)
 
         exit_button = Button(manage_booking_page, text="Exit", command=lambda: self._select_page(self._main_menu))

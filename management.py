@@ -155,11 +155,11 @@ class FormattedUserBookingData:
       return
       
     if len(first_name) >= 3 and len(first_name) <= 20:
-      self._first_name = name
+      self._first_name = first_name
     else:
       raise FormattedUserError("First name must be 3 - 20 characters long.")
     
-    if len(last_name) >= 5 and len(last_name) <= 30:
+    if len(last_name) >= 3 and len(last_name) <= 30:
       self._last_name = last_name
     else:
       raise FormattedUserError("Last name must be 5 - 30 Characters long.")
@@ -374,7 +374,23 @@ class Booking:
         except Exception as e:
           raise BookingSaveError(e)
           return False
-        
+
+    def delete(self):
+      if self._booking_id is None:
+        print("Booking ID is none.")
+        return False
+
+      try:
+        _database.con.execute('''
+                              DELETE FROM bookings
+                              WHERE ID=?
+                              ''', (self._booking_id, ))
+        _database.save()
+        return True
+      except Exception as e:
+        print(e)
+        return False
+      
   
     def __str__(self):
       format_date = "%d/%m/%Y"
