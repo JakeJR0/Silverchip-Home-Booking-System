@@ -186,3 +186,37 @@ class TestFormattedTimeAndDate:
   def test___init__(self):
     # This tests that the class will only accept valid parameters.
     pass
+
+def test_us_date_to_uk():
+  # This tests the function to verify that the result is the expected result.
+
+  # Sets default month for test.
+  month = "04"
+  
+  # Sets default year for test.
+  year = "2020"
+
+  # Creates a loop for the 
+  # days.
+  
+  for day in range(1, 30):
+    # Converts the day to a string.
+    day = str(day)
+
+    # Creates a US Style date for
+    # the function to convert.
+    
+    us_date = "{}/{}/{}".format(year, month, day)
+
+    # Creates a UK Style date to assert against.
+    
+    uk_date = "{}/{}/{}".format(day, month, year)
+
+
+    # Converts the US Style date to UK style date.
+    
+    converted_date = us_date_to_uk(us_date)
+
+    # Checks if the date is correct.
+    assert uk_date == converted_date, "Expected: {}, result: {}".format(converted_date, uk_date)
+    

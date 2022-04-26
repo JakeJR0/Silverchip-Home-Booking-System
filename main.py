@@ -6,7 +6,6 @@ import tkinter.font as fnt
 # Import Python modules
 from tkinter import *
 from tkinter import messagebox as box
-
 import management
 import storage
 from tkcalendar import DateEntry
@@ -102,12 +101,40 @@ class Application:
                     self._admin_list.insert(END, user.username)
                 elif user.level == 2:
                     self._guest_list.insert(END, user.username)
+   
+  
+    def _save_edit_booking(self):
+        booking = self._booking_manage_instance
+        booking.start.date = self._edit_selected_start_date_output.get()
+        
+        booking.end.date = self._edit_selected_end_date_output.get()
+      
+        booking.start.hour = int(self._edit_selected_check_in_output_hour.get())
+        booking.start.minute = int(self._edit_selected_check_in_output_minute.get())
+        booking.user.postcode = self._edit_selected_postcode_output.get()
+        booking.end.hour = int(self._edit_selected_check_out_output_hour.get())
+        booking.end.min = int(self._edit_selected_check_out_output_minute.get())
+        booking.full_name = self._edit_selected_full_name_output.get()
+        booking.phone_number = self._edit_selected_phone_number_output.get()
+        booking.user.email = self._edit_selected_email_output.get()
+        booking.user.pets = int(self._edit_selected_pet_amount_output.get())
+      
+      
+        success = booking.save()
+      
+        if success:
+          box.showinfo("Booking Saved", "The booking has been successfully saved.")
+          self._view_booking_manage = None
+          self._go_to_main_menu()
+        else:
+          box.showwarning("Booking Error", "Booking failed to save.")
 
     def _book_stay(self):
         start_date = self._start_date_entry.get_date()
         start_date_hour = self
         end_date = self._end_date_entry.get_date()
-
+        box.showinfo("Booking Complete","You have made a booking...")
+        self._go_to_main_menu()
         try:
             start_date = str(start_date).replace("-", "/")
             start_date = "{}/{}/{}".format(start_date[8:10], start_date[5:7], start_date[0:4])
@@ -121,8 +148,8 @@ class Application:
             start_date = management.FormattedTimeAndDate(start_date, int(hour), int(mins))
             end_date = management.FormattedTimeAndDate(end_date, int(18), int(0))
 
-        except management.IncorrectFormatedDateAndTime as e:
-            box.showwarning("Date Invalid", e)
+        except management.IncorrectFormattedDateAndTime as e:
+            box.showwarning("Date Provided is invalid", e)
         except Exception as e:
             print(e)
 
@@ -137,8 +164,9 @@ class Application:
           return
         elif len(phone_number) != 11:
           box.showwarning("Phone Number", "The phone number provided is {} numbers long when a number should be 11.".format(len(phone_number)))
-          
-        email_entry = self._email_entry
+          return
+        
+        email_entry = self._email_entry.get()
         at_count = 0
         dot_count = 0
         invalid_count = 0
@@ -158,22 +186,36 @@ class Application:
         elif at_count > 1:
             box.showwaring("Error","Please enter a valid email address")
             return
-        elif len(var) <= 2:
-            box.showwaring("Error","Please enter a valid email address")
-            return
-
+          
+        pet_amount = self._pet_amount.get()
+      
         if len(pet_amount) > 2:
           box.showwarning("Error","Please enter a pet number less than 2")
           return
         elif len(pet_amount)< 0:
           box.showwarning("Error", "Please enter a valid pet number")
           return
-
+        address_entry = self._address_entry.get()
         if len(address_entry) > 8:
           box.showwarning("Error","Please enter a valid postcode...")
+          return
         elif len(address_entry) < 6:
           box.showwarning("Error","Please enter a valid postcode...")
+          return
+        first_name, last_name = self._full_name_entry.get().split(" ", 2) 
+        user_data = None
+        try:
+          
+          user_data = management.FormattedUserBookingData(first_name, last_name, address_entry, email_entry, phone_number, pet_amount)
+        except:
+          pass
+          
+        if management.BookingManagement.booking_available(start_date, end_date):
+          booking = management.Booking(start_date, end_date, user_data, create=True)
+          
 
+
+  
     def _get_account(self):
         account = {
             "type": None,
@@ -272,21 +314,111 @@ class Application:
         self._select_page(self._main_menu)
 
     def _go_to_make_booking(self, event=None):
-        self._select_page(self._make_booking)
+        self._select_page(self._make_booking) 
+      
+      # these go to different sections of code when called
 
     def _go_to_manage_accounts(self, event=None):
-        self._select_page(self._manage_accounts_page)
+        self._select_page(self._manage_accounts_page) 
 
     def _go_to_edit_accounts(self, event=None):
+        booking = self._booking_manage_instance
+
         self._select_page(self._new_accounts_page)
+        
 
     def _go_to_new_password_page(self, event=None):
         self._select_page(self._new_password_page)
 
     def _go_to_view_booking_page(self, event=None):
+        if not self._user.admin and not self._user.super_admin:
+          box.showwarning("Access Denied", "You are not authorised to access this area.")
+          return
+          
+        for item in self._bookings_list.curselection():
+          self._bookings_list.delete(item)
+          
+        bookings = management.BookingManagement.get_bookings()
+        self._bookings_list_list = []
+        for i in bookings:
+          self._bookings_list.insert(END, str(i))
+          self._bookings_list_list.append(i)
+          
+          
         self._select_page(self._view_booking_page)
 
+    def _set_edit_selected_with_booking(self, booking=management.Booking):
+      
+      def format_time(time=""):
+        if int(time) <= 9:
+          time = "0{}".format(time)
+        else:
+          time = str(time)
+
+        return time
+
+      def format_price(price=0.0):
+        new_price = "{:.2f}".format(price)
+        return new_price
+        
+
+      self._edit_selected_start_date_output.insert(END, booking.start.date.strftime("%d/%m/%Y"))
+      self._edit_selected_end_date_output.insert(END, booking.end.date.strftime("%d/%m/%Y"))
+      
+      self._edit_selected_check_in_output_hour.insert(END, format_time(booking.start.hour))
+      self._edit_selected_check_in_output_minute.insert(END, booking.start.minute)
+      self._edit_selected_check_out_output_hour.insert(END, format_time(booking.end.hour))
+      self._edit_selected_check_out_output_minute.insert(END, format_time(booking.end.minute))
+      self._edit_selected_full_name_output.insert(END,"{}".format(booking.user.name))
+      self._edit_selected_email_output.insert(END, "{}".format(booking.user.email))
+      self._edit_selected_postcode_output.insert(END, booking.user.postcode)
+      self._edit_selected_pet_amount_output.insert(END, "{}".format(booking.user.pets))
+      self._edit_selected_phone_number_output.insert(END, booking.user.phone_number)
+      self._edit_selected_price_output.config(text="£{}".format(format_price(booking.cost)))
+
+    def _set_edit_selected_to_empty(self):
+      self._edit_selected_start_date_output.delete(0, END)
+      self._edit_selected_end_date_output.delete(0, END)
+      self._edit_selected_check_in_output_hour.delete(0, END)
+      self._edit_selected_check_in_output_minute.delete(0, END)
+      self._edit_selected_check_out_output_hour.delete(0, END)
+      self._edit_selected_check_out_output_minute.delete(0, END)
+      self._edit_selected_full_name_output.delete(0, END)
+      self._edit_selected_email_output.delete(0, END)
+      self._edit_selected_postcode_output.delete(0, END)
+      self._edit_selected_pet_amount_output.delete(0, END)
+      self._edit_selected_price_output.config(text="")
+  
+    def _go_to_edit_selected_booking_page(self, event=None):
+      booking = None
+      
+      for i in self._manage_bookings_list.curselection():
+        booking = self._manage_bookings_list_list[i]
+
+      if booking is None:
+        box.showwarning("No Booking Selected", "Please select a booking to view.")
+        return
+      self._booking_manage_instance = booking
+      self._set_edit_selected_to_empty()
+      self._set_edit_selected_with_booking(booking)
+      
+      self._select_page(self._edit_selected_booking)
+
     def _go_to_manage_booking_page(self, event=None):
+        if not self._user.admin and not self._user.super_admin:
+          box.showwarning("Access Denied", "You are not authorised to access this area.")
+          return
+          
+        for item in self._manage_bookings_list.curselection():
+          self._manage_bookings_list.delete(item)
+          
+        bookings = management.BookingManagement.get_bookings()
+        self._manage_bookings_list_list = []
+
+        for i in bookings:
+          self._manage_bookings_list.insert(END, str(i))
+          self._manage_bookings_list_list.append(i)
+          
         self._select_page(self._manage_booking_page)
 
     def _hide_booking_status_message(self, event=None):
@@ -295,6 +427,18 @@ class Application:
     def _check_booking_availability(self, event=None):
         make_booking = self._make_booking
         booking_available = True
+        start_date = self._start_date_entry.get_date()
+        end_date = self._end_date_entry.get_date()
+      
+        start_date = str(start_date).replace("-", "/")
+        start_date = "{}/{}/{}".format(start_date[8:10], start_date[5:7], start_date[0:4])
+
+        end_date = str(end_date).replace("-", "/")
+        end_date = "{}/{}/{}".format(end_date[8:10], end_date[5:7], end_date[0:4])
+      
+        start_date = management.FormattedTimeAndDate(start_date)
+        end_date = management.FormattedTimeAndDate(end_date)
+        booking_available = management.BookingManagement.booking_available(start_date, end_date)
         # Available or Unavailable status
 
         if booking_available == True:
@@ -316,18 +460,30 @@ class Application:
         else:
             level = 10
 
+          #this sets the permission level of a user
+
         new_account_username = self._new_page_name_entry.get()
         new_account_password = self._new_page_pass_entry.get()
+
+
+      #this takes the username and password input
         self._new_page_name_entry.delete(0, END)
         self._new_page_pass_entry.delete(0, END)
 
+      #this deletes the username and password input
+
         new_user = management.User(new_account_username, new_account_password, level)
+
+      #this adds a new user
         success = management.UserManager.create(self._user, new_user, new_account_password)
+
+      #this adds the new user to the database
         if success:
             box.showinfo("User Created",
                          "User {} with password {} has been created with level {} access.".format(new_account_username,
                                                                                                   new_account_password,
                                                                                                   new_account_permission_level))
+          #this confirms that the user has been created
 
             if level == 1:
                 self._guest_list.insert(END, new_account_username)
@@ -336,16 +492,24 @@ class Application:
 
             self._go_to_manage_accounts()
 
+          #this goes back to the manage accounts page
+
     def _remove_account_action(self):
         account_details = self._get_account()
         user_to_remove = management.User(account_details["name"])
+
+      #this gets the account the user wishes to remove
 
         result = False
 
         try:
             result = management.UserManager.remove_user(self._user, user_to_remove)
+
+        #this removes the account                                             
         except management.PermissionDenied as reason:
             box.showwarning("Permission Denied", reason)
+
+          #this tells the user if an account could not be removed
         except:
             pass
 
@@ -355,6 +519,82 @@ class Application:
             elif account_details["type"] == "admin":
                 self._admin_list.delete(account_details["position"])
 
+              #this deletes the account
+    def _view_booking_view(self):
+      booking = None
+      
+      for i in self._bookings_list.curselection():
+        booking = self._bookings_list_list[i]
+
+      if booking is None:
+        box.showwarning("No Booking Selected", "Please select a booking to view.")
+        return
+
+      def format_time(time=""):
+        if int(time) <= 9:
+          time = "0{}".format(time)
+        else:
+          time = str(time)
+
+        return time
+
+      def format_price(price=0.0):
+        new_price = "{:.2f}".format(price)
+        return new_price
+        
+
+      self._view_selected_start_date_output.config(text=booking.start.date.strftime("%d/%m/%Y"))
+      self._view_selected_end_date_output.config(text=booking.end.date.strftime("%d/%m/%Y"))
+      self._view_selected_check_in_output.config(text="{}:{}".format(format_time(booking.start.hour), format_time(booking.start.minute)))
+      self._view_selected_check_out_output.config(text="{}:{}".format(format_time(booking.end.hour), format_time(booking.end.minute)))
+      self._view_selected_full_name_output.config(text="{}".format(booking.user.name))
+      self._view_selected_email_output.config(text="{}".format(booking.user.email))
+      self._view_selected_postcode_output.config(text=booking.user.postcode)
+      self._view_selected_pet_amount_output.config(text="{}".format(booking.user.pets))
+      self._view_selected_phone_number_output.config(text=booking.user.phone_number)
+      self._view_selected_price_output.config(text="£{}".format(format_price(booking.cost)))
+      
+      self._select_page(self._view_selected_booking)
+
+    def _view_booking_manage(self):
+      booking = None
+      
+      for i in self._manage_bookings_list.curselection():
+        booking = self._manage_bookings_list_list[i]
+
+      if booking is None:
+        box.showwarning("No Booking Selected", "Please select a booking to view.")
+        return
+
+      def format_time(time=""):
+        if int(time) <= 9:
+          time = "0{}".format(time)
+        else:
+          time = str(time)
+
+        return time
+
+      def format_price(price=0.0):
+        new_price = "{:.2f}".format(price)
+        return new_price
+        
+
+      self._view_selected_start_date_output.config(text=booking.start.date.strftime("%d/%m/%Y"))
+      self._view_selected_end_date_output.config(text=booking.end.date.strftime("%d/%m/%Y"))
+      self._view_selected_check_in_output.config(text="{}:{}".format(format_time(booking.start.hour), format_time(booking.start.minute)))
+      self._view_selected_check_out_output.config(text="{}:{}".format(format_time(booking.end.hour), format_time(booking.end.minute)))
+      self._view_selected_full_name_output.config(text="{}".format(booking.user.name))
+      self._view_selected_email_output.config(text="{}".format(booking.user.email))
+      self._view_selected_postcode_output.config(text=booking.user.postcode)
+      self._view_selected_pet_amount_output.config(text="{}".format(booking.user.pets))
+      self._view_selected_phone_number_output.config(text=booking.user.phone_number)
+      self._view_selected_price_output.config(text="£{}".format(format_price(booking.cost)))
+      
+      self._select_page(self._view_selected_booking)
+
+    
+
+  
     def _open_admin_panel(self):
         print("Username: {} Level: {}".format(self._user.username, self._user.level))
         if self._user.level > 1:
@@ -376,7 +616,7 @@ class Application:
         self._menu.add_command(label="Return to main menu", command=lambda: self._select_page(self._main_menu))
         self._root.title('Booking System')  # Set name of window
         # Set background
-        img = PhotoImage(file="")  # Select background image
+        img = PhotoImage(file="background.png")  # Select background image
         background = Label(self._root, image=img)
 
         self._root.config(menu=self._menu)
@@ -463,6 +703,19 @@ class Application:
 
         self._login_page_name_entry.bind("<Return>", self._focus_on_password)
         self._login_page_pass_entry.bind("<Return>", self._login_page_submit)
+
+        placeholder_label1 = Label(login_page, text="")
+        placeholder_label1.place(anchor="nw")
+
+        placeholder_label2 = Label(login_page, text="")
+        placeholder_label2.place(anchor="ne")
+
+        placeholder_label3 = Label(login_page, text="")
+        placeholder_label3.place(anchor="sw")
+
+        placeholder_label4 = Label(login_page, text="")
+        placeholder_label4.place(anchor="se")
+      
         # This places the object onto the frame
         # using rows and columns.
 
@@ -475,6 +728,8 @@ class Application:
         # Current date and time
 
         # Start date input box
+        self._bookings_list_list = []
+        self._manage_booking_list_list = []
         self._start_date_label = Label(make_booking, text="Start date:")
         self._start_date_label.grid(row=0, column=0, padx=(0, 0), pady=(15, 0))
 
@@ -553,8 +808,10 @@ class Application:
         # Information input
         # Name input
         full_name_entry_label = tkinter.Label(make_booking, text="Full name:")
+        
         full_name_entry_label.grid(row=6, column=0, padx=(0, 110))
         full_name_entry = tkinter.Entry(make_booking)
+        self._full_name_entry = full_name_entry
         full_name_entry.grid(row=7, column=0)
 
         # Address input
@@ -562,7 +819,7 @@ class Application:
         address_entry_label.grid(row=6, column=1, padx=(0, 115))
         address_entry = tkinter.Entry(make_booking)
         address_entry.grid(row=7, column=1)
-
+        self._address_entry = address_entry
         # Number input
         number_entry_label = tkinter.Label(make_booking, text="Phone number:")
         number_entry_label.grid(row=8, column=0, padx=(0, 80))
@@ -575,12 +832,12 @@ class Application:
         email_entry.grid(row=9, column=1)
         self._email_entry = email_entry
         # Amount of pets input
-        pet_ammount = tkinter.StringVar(value=0)
-        pet_ammount_label = Label(make_booking, text="Number of pets:")
-        pet_ammount_label.grid(column=1, row=8, padx=(380, 0))
-        pet_ammount_entry = tkinter.Spinbox(make_booking, from_=0, to=2, textvariable=pet_ammount, wrap=True, width=3)
-        pet_ammount_entry.grid(column=1, row=9, padx=(300, 0))
-        self._pet_amount = pet_ammount_entry
+        pet_amount = tkinter.StringVar(value=0)
+        pet_amount_label = Label(make_booking, text="Number of pets:")
+        pet_amount_label.grid(column=1, row=8, padx=(380, 0))
+        pet_amount_entry = tkinter.Spinbox(make_booking, from_=0, to=2, textvariable=pet_amount, wrap=True, width=3)
+        pet_amount_entry.grid(column=1, row=9, padx=(300, 0))
+        self._pet_amount = pet_amount_entry
 
         # Book Button
         book_button = tkinter.Button(make_booking, text="Book", command=self._book_stay, height=1, anchor='w')
@@ -604,8 +861,8 @@ class Application:
 
         bookings_list = Listbox(view_booking_page, height=15, width=50)
         bookings_list.grid(column=0, row=1)
-
-        view_button = Button(view_booking_page, text="View", command="")
+        self._bookings_list = bookings_list
+        view_button = Button(view_booking_page, text="View", command=self._view_booking_view)
         view_button.grid(column=0, row=2, padx=(0, 290), pady=15)
 
         exit_button = Button(view_booking_page, text="Exit", command=lambda: self._select_page(self._main_menu))
@@ -617,11 +874,11 @@ class Application:
 
         bookings_list = Listbox(manage_booking_page, height=15, width=50)
         bookings_list.grid(column=0, row=1)
-
-        view_button = Button(manage_booking_page, text="View", command="")
+        self._manage_bookings_list = bookings_list
+        view_button = Button(manage_booking_page, text="View", command=self._view_booking_manage)
         view_button.grid(column=0, row=2, padx=(0, 400), pady=15)
 
-        edit_button = Button(manage_booking_page, text="Edit", command="")
+        edit_button = Button(manage_booking_page, text="Edit", command=self._go_to_edit_selected_booking_page)
         edit_button.grid(column=0, row=2, padx=(0, 145), pady=15)
 
         delete_button = Button(manage_booking_page, text="Delete", command="")
@@ -666,143 +923,181 @@ class Application:
         # View Selected Booking
         # Contents of the page
         # Start date
-        start_date_label = Label(edit_selected_booking, text="Start date:")
-        start_date_label.grid(column=0,row=0,padx=(0,140))
-        start_date_output = Label(edit_selected_booking, textvar="") # add variable
+        start_date_label = Label(view_selected_booking, text="Start date:")
+        start_date_label.grid(column=0,row=0,padx=(0,140), pady=(30,0))
+        start_date_output = Label(view_selected_booking, textvar="") # add variable
         start_date_output.grid(column=0,row=1,padx=(0,140))
+        self._view_selected_start_date_output = start_date_output
 
         # End date
-        end_date_label = Label(edit_selected_booking, text="End date:")
-        end_date_label.grid(column=1,row=0,padx=(140,0))
-        end_date_output = Label(edit_selected_booking, textvar="") # add variable
+        end_date_label = Label(view_selected_booking, text="End date:")
+        end_date_label.grid(column=1,row=0,padx=(140,0), pady=(30,0))
+        end_date_output = Label(view_selected_booking, textvar="") # add variable
         end_date_output.grid(column=1,row=1,padx=(140,0))
+        self._view_selected_end_date_output = end_date_output
 
         # Check in time
-        check_in_label = Label(edit_selected_booking, text="Check in time:")
-        check_in_label.grid(column=0,row=2,padx=(0,140))
-        check_in_output = Label(edit_selected_booking, textvar="") # add variable
+        check_in_label = Label(view_selected_booking, text="Check in time:")
+        check_in_label.grid(column=0,row=2,padx=(0,140), pady=(30,0))
+        check_in_output = Label(view_selected_booking, textvar="") # add variable
         check_in_output.grid(column=0,row=3,padx=(0,140))
+        self._view_selected_check_in_output = check_in_output
 
         # Check out time
-        check_out_label = Label(edit_selected_booking, text="Check out time:")
-        check_out_label.grid(column=1,row=2,padx=(140,0))
-        check_out_output = Label(edit_selected_booking, textvar="") # add variable
+        check_out_label = Label(view_selected_booking, text="Check out time:")
+        check_out_label.grid(column=1,row=2,padx=(140,0), pady=(30,0))
+        check_out_output = Label(view_selected_booking, textvar="") # add variable
         check_out_output.grid(column=1,row=3,padx=(140,0))
+        self._view_selected_check_out_output = check_out_output
 
         # Full name
-        full_name_label = Label(edit_selected_booking, text="Full name:")
-        full_name_label.grid(column=0,row=4,padx=(0,140))
-        full_name_output = Label(edit_selected_booking, textvar="") # add variable
+        full_name_label = Label(view_selected_booking, text="Full name:")
+        full_name_label.grid(column=0,row=4,padx=(0,140), pady=(30,0))
+        full_name_output = Label(view_selected_booking, textvar="") # add variable
         full_name_output.grid(column=0,row=5,padx=(0,140))
+        self._view_selected_full_name_output = full_name_output
 
         # Postcode
-        postcode_label = Label(edit_selected_booking, text="Postcode:")
-        postcode_label.grid(column=1,row=4,padx=(140,0))
-        postcode_output = Label(edit_selected_booking, textvar="") # add variable
+        postcode_label = Label(view_selected_booking, text="Postcode:")
+        postcode_label.grid(column=1,row=4,padx=(140,0), pady=(30,0))
+        postcode_output = Label(view_selected_booking, textvar="") # add variable
         postcode_output.grid(column=1,row=5,padx=(140,0))
+        self._view_selected_postcode_output = postcode_output
 
         # Phone number
-        phone_number_label = Label(edit_selected_booking, text="Phone number:")
-        phone_number_label.grid(column=0,row=6,padx=(0,140))
-        phone_number_output = Label(edit_selected_booking, textvar="") # add variable
+        phone_number_label = Label(view_selected_booking, text="Phone number:")
+        phone_number_label.grid(column=0,row=6,padx=(0,140), pady=(30,0))
+        phone_number_output = Label(view_selected_booking, textvar="") # add variable
         phone_number_output.grid(column=0,row=7,padx=(0,140))
+        self._view_selected_phone_number_output = phone_number_output
 
         # Email
-        email_label = Label(edit_selected_booking, text="Email:")
-        email_label.grid(column=1,row=6,padx=(140,0))
-        email_output = Label(edit_selected_booking, textvar="") # add variable
+        email_label = Label(view_selected_booking, text="Email:")
+        email_label.grid(column=1,row=6,padx=(140,0), pady=(30,0))
+        email_output = Label(view_selected_booking, textvar="") # add variable
         email_output.grid(column=1,row=7,padx=(140,0))
+        self._view_selected_email_output = email_output
 
         # Number of pets
-        pet_ammount_label = Label(edit_selected_booking, text="Number of pets:")
-        pet_ammount_label.grid(column=0,row=8,padx=(0,140))
-        pet_ammount_output = Label(edit_selected_booking, textvar="") # add variable
-        pet_ammount_output.grid(column=0,row=9,padx=(0,140))
+        pet_amount_label = Label(view_selected_booking, text="Number of pets:")
+        pet_amount_label.grid(column=0,row=8,padx=(0,140), pady=(30,0))
+        pet_amount_output = Label(view_selected_booking, textvar="") # add variable
+        pet_amount_output.grid(column=0,row=9,padx=(0,140))
+        self._view_selected_pet_amount_output = pet_amount_output
 
         # Price
-        price_label = Label(edit_selected_booking, text="Price:")
-        price_label.grid(column=1,row=8,padx=(140,0))
-        price_output = Label(edit_selected_booking, textvar="") # add variable
+        price_label = Label(view_selected_booking, text="Price:")
+        price_label.grid(column=1,row=8,padx=(140,0), pady=(30,0))
+        price_output = Label(view_selected_booking, textvar="") # add variable
         price_output.grid(column=1,row=9,padx=(140,0))
+        self._view_selected_price_output = price_output
 
         # Save button - not needed on this page
         # save_button = Button(edit_selected_booking, text="Save", command="")
         # save_button.grid(column=0,row=10,padx=(0,140))
 
         # Exit button
-        exit_button = Button(edit_selected_booking, text="Exit", command=self._go_to_main_menu)
-        exit_button.grid(column=1,row=10,padx=(140,0))
+        exit_button = Button(view_selected_booking, text="Exit", command=self._go_to_main_menu)
+        exit_button.grid(column=1,row=10,padx=(140,0), pady=(30,0))
         
 
         # Edit Selected Booking
         # Contents of the page
         # Start date
         start_date_label = Label(edit_selected_booking, text="Start date:")
-        start_date_label.grid(column=0,row=0,padx=(0,140))
-        start_date_output = Label(edit_selected_booking, textvar="") # add variable
+        start_date_label.grid(column=0,row=0,padx=(0,140), pady=(30,0))
+        start_date_output = DateEntry(edit_selected_booking, selectmode='day', date_pattern="DD/MM/YYYY")
         start_date_output.grid(column=0,row=1,padx=(0,140))
+        self._edit_selected_start_date_output = start_date_output
 
         # End date
         end_date_label = Label(edit_selected_booking, text="End date:")
-        end_date_label.grid(column=1,row=0,padx=(140,0))
-        end_date_output = Label(edit_selected_booking, textvar="") # add variable
+        end_date_label.grid(column=1,row=0,padx=(140,0), pady=(30,0))
+        end_date_output = DateEntry(edit_selected_booking, selectmode='day', date_pattern="DD/MM/YYYY")
         end_date_output.grid(column=1,row=1,padx=(140,0))
+        self._edit_selected_end_date_output = end_date_output
 
         # Check in time
         check_in_label = Label(edit_selected_booking, text="Check in time:")
-        check_in_label.grid(column=0,row=2,padx=(0,140))
-        check_in_output = Label(edit_selected_booking, textvar="") # add variable
-        check_in_output.grid(column=0,row=3,padx=(0,140))
+        check_in_label.grid(column=0,row=2,padx=(0,140), pady=(30,0))
+
+        check_in_hour = StringVar(0)
+        check_in_hour_output = Spinbox(edit_selected_booking, from_=0, to=23, textvariable=check_in_hour, wrap=True, width=3) # add variable
+        check_in_hour_output.grid(column=0,row=3,padx=(0,190))
+
+        check_in_min = StringVar(0)
+        check_in_min_output = Spinbox(edit_selected_booking, from_=0, to=59, textvariable=check_in_min, wrap=True, width=3)
+        check_in_min_output.grid(column=0,row=3,padx=(0,80))
+      
+        self._edit_selected_check_in_output_hour = check_in_hour_output
+        self._edit_selected_check_in_output_minute = check_in_min_output
+
 
         # Check out time
         check_out_label = Label(edit_selected_booking, text="Check out time:")
-        check_out_label.grid(column=1,row=2,padx=(140,0))
-        check_out_output = Label(edit_selected_booking, textvar="") # add variable
-        check_out_output.grid(column=1,row=3,padx=(140,0))
+        check_out_label.grid(column=1,row=2,padx=(140,0), pady=(30,0))
+
+        check_out_hour = StringVar(0)
+        check_out_hour_output = Spinbox(edit_selected_booking, from_=0, to=23, textvariable=check_out_hour, wrap=True, width=3) # add variable
+        check_out_hour_output.grid(column=1,row=3,padx=(80,0))
+
+        check_out_min = StringVar(0)
+        check_out_min_output = Spinbox(edit_selected_booking, from_=0, to=59, textvariable=check_out_min, wrap=True, width=3)
+        check_out_min_output.grid(column=1,row=3,padx=(190,0))
+      
+        self._edit_selected_check_out_output_hour = check_out_hour_output
+        self._edit_selected_check_out_output_minute = check_out_min_output
 
         # Full name
         full_name_label = Label(edit_selected_booking, text="Full name:")
-        full_name_label.grid(column=0,row=4,padx=(0,140))
-        full_name_output = Label(edit_selected_booking, textvar="") # add variable
+        full_name_label.grid(column=0,row=4,padx=(0,140), pady=(30,0))
+        full_name_output = Entry(edit_selected_booking, textvar="") # add variable
         full_name_output.grid(column=0,row=5,padx=(0,140))
+        self._edit_selected_full_name_output = full_name_output
 
         # Postcode
         postcode_label = Label(edit_selected_booking, text="Postcode:")
-        postcode_label.grid(column=1,row=4,padx=(140,0))
-        postcode_output = Label(edit_selected_booking, textvar="") # add variable
+        postcode_label.grid(column=1,row=4,padx=(140,0), pady=(30,0))
+        postcode_output = Entry(edit_selected_booking, textvar="") # add variable
         postcode_output.grid(column=1,row=5,padx=(140,0))
+        self._edit_selected_postcode_output = postcode_output
 
         # Phone number
         phone_number_label = Label(edit_selected_booking, text="Phone number:")
-        phone_number_label.grid(column=0,row=6,padx=(0,140))
-        phone_number_output = Label(edit_selected_booking, textvar="") # add variable
+        phone_number_label.grid(column=0,row=6,padx=(0,140), pady=(30,0))
+        phone_number_output = Entry(edit_selected_booking, textvar="") # add variable
         phone_number_output.grid(column=0,row=7,padx=(0,140))
+        self._edit_selected_phone_number_output = phone_number_output
 
         # Email
         email_label = Label(edit_selected_booking, text="Email:")
-        email_label.grid(column=1,row=6,padx=(140,0))
-        email_output = Label(edit_selected_booking, textvar="") # add variable
+        email_label.grid(column=1,row=6,padx=(140,0), pady=(30,0))
+        email_output = Entry(edit_selected_booking, textvar="") # add variable
         email_output.grid(column=1,row=7,padx=(140,0))
+        self._edit_selected_email_output = email_output
 
         # Number of pets
-        pet_ammount_label = Label(edit_selected_booking, text="Number of pets:")
-        pet_ammount_label.grid(column=0,row=8,padx=(0,140))
-        pet_ammount_output = Label(edit_selected_booking, textvar="") # add variable
-        pet_ammount_output.grid(column=0,row=9,padx=(0,140))
+        pet_amount = StringVar(0)
+        pet_amount_label = Label(edit_selected_booking, text="Number of pets:")
+        pet_amount_label.grid(column=0,row=8,padx=(0,140), pady=(30,0))
+        pet_amount_output = Spinbox(edit_selected_booking, from_=0, to=2, textvariable=pet_amount, wrap=True, width=3) # add variable
+        pet_amount_output.grid(column=0,row=9,padx=(0,140))
+        self._edit_selected_pet_amount_output = pet_amount_output
 
         # Price
         price_label = Label(edit_selected_booking, text="Price:")
-        price_label.grid(column=1,row=8,padx=(140,0))
+        price_label.grid(column=1,row=8,padx=(140,0), pady=(30,0))
         price_output = Label(edit_selected_booking, textvar="") # add variable
         price_output.grid(column=1,row=9,padx=(140,0))
+        self._edit_selected_price_output = price_output
 
         # Save button
-        save_button = Button(edit_selected_booking, text="Save", command="")
-        save_button.grid(column=0,row=10,padx=(0,140))
+        save_button = Button(edit_selected_booking, text="Save", command=self._save_edit_booking) # Alex
+        save_button.grid(column=0,row=10,padx=(0,140), pady=(30,0))
 
         # Exit button
         exit_button = Button(edit_selected_booking, text="Exit", command=self._go_to_main_menu)
-        exit_button.grid(column=1,row=10,padx=(140,0))
+        exit_button.grid(column=1,row=10,padx=(140,0), pady=(30,0))
         
         
         # admin page    
@@ -862,6 +1157,7 @@ class Application:
         return_to_menu = tkinter.Button(manage_accounts_page, text="Exit", command=self._go_to_main_menu, anchor='w')
         return_to_menu.grid(column=1, row=2, padx=(250, 0), pady=60)
         self._booking_availability = tkinter.Label(self._make_booking, text="")
+        self._booking_availability.grid(row=10, column=1, columnspan=3)
         # new account page
         permission_level = 1
         self._new_page_level = StringVar(new_accounts_page)
@@ -895,7 +1191,9 @@ class Application:
         # new_user_name = new_page_name_entry.get()
         # new_user = management.User("Username", new_user_name, permission_level=2,)
         # success = management.UserManager.create(self._user, new_user, "password")
-        self._select_page(self._edit_selected_booking)
+        self._select_page(self._login_page)
+        print("Booking Count: {}".format(management.BookingManagement.booking_count())) # DELETE THIS
+        self._booking_manage_instance = None
         self._root.mainloop()
 
 

@@ -10,6 +10,7 @@ tkcalendar = "^1.6.1"
 pytest = "^7.1.1"
 itimg = "^0.1"
 flake8 = "^4.0.1"
+pandas = "^1.4.2"
 
 [tool.poetry.dev-dependencies]
 
