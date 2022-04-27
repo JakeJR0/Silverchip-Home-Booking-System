@@ -65,7 +65,7 @@ pandas @ file:///home/runner/.cache/pypoetry/artifacts/3d/80/1d/d2f8f8916ea8aaeb
 parso==0.5.2
 pastel==0.2.1
 pexpect==4.8.0
-Pillow==8.3.2
+Pillow==9.0.1
 pipreqs-amasad==0.4.10
 pkginfo==1.7.1
 platformdirs==2.3.0
