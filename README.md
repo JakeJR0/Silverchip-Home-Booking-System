@@ -9,6 +9,7 @@ The Booking System Project is designed to help administrators to book holidays f
 
 ## Badges
 [![Python Application](https://github.com/JakeJR0/Silverchip-Home-Booking-System/actions/workflows/python-app.yml/badge.svg)](https://github.com/JakeJR0/Silverchip-Home-Booking-System/actions/workflows/python-app.yml)
+[![codecov](https://codecov.io/gh/JakeJR0/Silverchip-Home-Booking-System/branch/main/graph/badge.svg?token=NSBRVLBD3H)](https://codecov.io/gh/JakeJR0/Silverchip-Home-Booking-System)
 [![Pylint](https://github.com/JakeJR0/Silverchip-Home-Booking-System/actions/workflows/pylint.yml/badge.svg)](https://github.com/JakeJR0/Silverchip-Home-Booking-System/actions/workflows/pylint.yml)
 
 ## Authors
