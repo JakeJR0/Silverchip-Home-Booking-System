@@ -147,6 +147,8 @@ class Application:
         start_date = self._start_date_entry.get_date()
         start_date_hour = self
         end_date = self._end_date_entry.get_date()
+        if start_date >= end_date:
+          box.showerror("Booking Error","The start date cannot be after or the same as the end date.")
         
         try:
             start_date = str(start_date).replace("-", "/")
@@ -191,31 +193,34 @@ class Application:
             elif c == " ":
                 invalid_count += 1
         if invalid_count > 0:
-            box.showwaring("Error","Please enter a valid email address")
+            box.showerror("Error","Please enter a valid email address")
             return
         elif dot_count > 2:
-            box.showwaring("Error","Please enter a valid email address")
+            box.showerror("Error","Please enter a valid email address")
             return
         elif at_count > 1:
-            box.showwaring("Error","Please enter a valid email address")
+            box.showerror("Error","Please enter a valid email address")
             return
           
         pet_amount = self._pet_amount.get()
-      
-        if len(pet_amount) > 2:
-          box.showwarning("Error","Please enter a pet number less than 2")
+        
+        if int(pet_amount) > 2:
+          box.showerror("Error","Please enter a pet number less than 2")
           return
-        elif len(pet_amount)< 0:
-          box.showwarning("Error", "Please enter a valid pet number")
+        elif int(pet_amount) < 0:
+          box.showerror("Error", "Please enter a valid pet number")
           return
+       
         address_entry = self._address_entry.get()
+        
         if len(address_entry) > 8:
-          box.showwarning("Error","Please enter a valid postcode...")
+          box.showerror("Error","Please enter a valid postcode...")
           return
         elif len(address_entry) < 6:
-          box.showwarning("Error","Please enter a valid postcode...")
+          box.showerror("Error","Please enter a valid postcode...")
           return
         first_name, last_name = self._full_name_entry.get().split(" ", 2) 
+        
       
         user_data = None
         try:
@@ -223,11 +228,14 @@ class Application:
           user_data = management.FormattedUserBookingData(first_name, last_name, address_entry, email_entry, phone_number, pet_amount)
         except:
           pass
+
+      
           
         if management.BookingManagement.booking_available(start_date, end_date):
           booking = management.Booking(start_date, end_date, user_data, create=True)
         box.showinfo("Booking Complete","You have made a booking...")
         self._go_to_main_menu()
+      
           
 
 

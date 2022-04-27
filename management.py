@@ -250,6 +250,9 @@ class FormattedUserBookingData:
     self._phone_number = phone_number
     self._pets = pets
 
+class BookingError(ValueError):
+  pass
+
 class BookingSaveError(SystemError):
   pass
 
@@ -311,13 +314,13 @@ class Booking:
         
       for date in date_range.date:
         date = us_date_to_uk(str(date))
-        month = str(int(date[3:4]))
+        month = str(int(date[3:5]))
+        print("Month", month)
         price = 0
         for i in month_prices.index:
           if int(month) == int(month_prices.loc[i, "month"]):
             price = month_prices.loc[i, "price"]
             total_cost += price
-        
 
       pet_cost = float(int(self._user_data.pets) * 25)
       total_cost += pet_cost
@@ -448,10 +451,23 @@ class Booking:
         _database.save()
         
 
+def get_dates():
+  start_date = []
+  end_date = []
 
+  for row in _database.con.execute("SELECT start_time, end_time FROM bookings"):
+    format = "%d/%m/%Y %H:%M"
+    if len(row[0]) != len(format):
+      format = "%d/%m/%Y"
+      
+    s_d = datetime.strptime(row[0], format)
+    e_d = datetime.strptime(row[0], format)
+    start_date.append(s_d)
+    end_date.append(e_d)
+  return start_date, end_date
 
 class BookingManagement:
-  
+      
     @classmethod
     def booking_count(self):
         for count_db in _database.con.execute("SELECT COUNT(*) FROM bookings"):
@@ -463,6 +479,22 @@ class BookingManagement:
       available = True
       start_date_string = start_date.date
       end_date_string = end_date.date
+      if start_date_string > end_date_string:
+        raise BookingError("The booking start date cannot be after the end date.")
+        return
+      elif start_date_string == end_date_string:
+        raise BookingError("The booking start date cannot be the same as the end date.")
+
+      start_dates, end_dates = get_dates()
+
+      for start_date in start_dates:
+        if start_date_string >=  start_date + timedelta(days=1):
+          raise BookingError("You must choose a different end date.")
+          
+      for end_date in end_dates:
+        if end_date_string >= end_date - timedelta(days=1):
+          raise BookingError("You must choose a different date,#.")
+        
       booking_range = pd.date_range(start=start_date_string, end=end_date_string, freq="1H").date
 
       for row in _database.con.execute("SELECT start_time, end_time FROM bookings"):
