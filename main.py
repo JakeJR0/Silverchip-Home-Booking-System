@@ -133,8 +133,7 @@ class Application:
         start_date = self._start_date_entry.get_date()
         start_date_hour = self
         end_date = self._end_date_entry.get_date()
-        box.showinfo("Booking Complete","You have made a booking...")
-        self._go_to_main_menu()
+        
         try:
             start_date = str(start_date).replace("-", "/")
             start_date = "{}/{}/{}".format(start_date[8:10], start_date[5:7], start_date[0:4])
@@ -212,6 +211,8 @@ class Application:
           
         if management.BookingManagement.booking_available(start_date, end_date):
           booking = management.Booking(start_date, end_date, user_data, create=True)
+        box.showinfo("Booking Complete","You have made a booking...")
+        self._go_to_main_menu()
           
 
 
