@@ -1,6 +1,10 @@
 # Silverchip Home Booking System
 
 The Booking System Project is designed to help administrators to book holidays for the guests.
+Branded with the Silverchip logo the "Holiday Home Booking System" was developed by the [Authors](#authors) 
+credited below during their work placement at Silverchip.
+
+A brief was provided with the requirements the program must meet and the features that had to be included.
 
 ## Table of contents:
 - [Badges](#badges)
