@@ -298,8 +298,8 @@ class Booking:
     def cost(self):
       total_cost = 0
       date_format = "%d/%m/%Y"
-      start = str(self._start_date.date.strftime(date_format))
-      end = str(self._end_date.date.strftime(date_format))
+      start = self._start_date.date.strftime(date_format)
+      end = self._end_date.date.strftime(date_format)
       date_range = pd.date_range(start=start, end=end, freq="1d")
       month_prices = pd.DataFrame({
         "month": [],
