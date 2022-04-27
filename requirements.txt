@@ -74,7 +74,7 @@ poetry>=1.0.5
 poetry-core==1.0.4
 protobuf==3.17.3
 ptyprocess==0.7.0
-py==1.0.0
+py>=1.8.2
 pyasn1==0.4.8
 pyasn1-modules==0.2.8
 pycodestyle==2.8.0

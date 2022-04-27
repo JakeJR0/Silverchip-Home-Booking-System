@@ -1173,7 +1173,7 @@ class Application:
         return_to_menu = tkinter.Button(manage_accounts_page, text="Exit", command=self._go_to_main_menu, anchor='w')
         return_to_menu.grid(column=1, row=2, padx=(250, 0), pady=60)
         self._booking_availability = tkinter.Label(self._make_booking, text="")
-        self._booking_availability.grid(row=10, column=1, columnspan=3, padx=(0,50))
+        self._booking_availability.grid(row=10, column=1, columnspan=3, padx=(0,340), pady=(0,15))
         # new account page
         permission_level = 1
         self._new_page_level = StringVar(new_accounts_page)
