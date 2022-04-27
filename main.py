@@ -102,7 +102,7 @@ class Application:
                 elif user.level == 2:
                     self._guest_list.insert(END, user.username)
    
-  
+    #saves all information edited on the edit booking page
     def _save_edit_booking(self):
         booking = self._booking_manage_instance
         try:
@@ -142,6 +142,7 @@ class Application:
         else:
           box.showwarning("Booking Error", "Booking failed to save.")
 
+    #this saves all the information entered in the booking page to the database
     def _book_stay(self):
         start_date = self._start_date_entry.get_date()
         start_date_hour = self
@@ -571,6 +572,7 @@ class Application:
 
       def format_price(price=0.0):
         new_price = "{:.2f}".format(price)
+        print(price)
         return new_price
         
 
