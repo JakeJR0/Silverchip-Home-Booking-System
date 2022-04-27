@@ -123,6 +123,7 @@ class FormattedUserBookingData:
   def first_name(self):
     return self._first_name
 
+
   @first_name.setter
   def first_name(self, name=""):
     if len(name) >= 3 and len(name) <= 20:
@@ -136,10 +137,10 @@ class FormattedUserBookingData:
 
   @last_name.setter
   def last_name(self, name=""):
-    if len(name) >= 5 and len(name) <= 30:
+    if len(name) >= 3 and len(name) <= 30:
       self._last_name = name
     else:
-      raise FormattedUserError("Last name must be 5 - 30 Characters long.")
+      raise FormattedUserError("Last name must be 3 - 30 Characters long.")
 
   @property
   def name(self):
@@ -162,7 +163,7 @@ class FormattedUserBookingData:
     if len(last_name) >= 3 and len(last_name) <= 30:
       self._last_name = last_name
     else:
-      raise FormattedUserError("Last name must be 5 - 30 Characters long.")
+      raise FormattedUserError("Last name must be 3 - 30 Characters long.")
       
   
   @property
@@ -184,7 +185,7 @@ class FormattedUserBookingData:
         
       self._phone_number = value
     else:
-      raise FormattedUserError("Last name must be 5 - 30 Characters long.")
+      raise FormattedUserError("Phone number must be 11 characters but you have {} characters.".format(str(len(value))))
 
   @property
   def email(self):
@@ -244,14 +245,10 @@ class FormattedUserBookingData:
 
   def __init__(self, first_name="", last_name="", postcode="", email="", phone_number="", pets=0):
     self._first_name, self._last_name = first_name, last_name
-    self._postcode = None 
-    self.postcode = postcode
-    self._email = None
-    self.email = email
-    self._phone_number = None
-    self.phone_number = phone_number
-    self._pets = None
-    self.pets = pets
+    self._postcode = postcode
+    self._email = email
+    self._phone_number = phone_number
+    self._pets = pets
 
 class BookingSaveError(SystemError):
   pass

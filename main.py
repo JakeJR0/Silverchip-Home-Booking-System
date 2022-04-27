@@ -105,23 +105,36 @@ class Application:
   
     def _save_edit_booking(self):
         booking = self._booking_manage_instance
-        booking.start.date = self._edit_selected_start_date_output.get()
+        try:
+          booking.start.date = self._edit_selected_start_date_output.get()
+          
+          booking.end.date = self._edit_selected_end_date_output.get()
         
-        booking.end.date = self._edit_selected_end_date_output.get()
-      
-        booking.start.hour = int(self._edit_selected_check_in_output_hour.get())
-        booking.start.minute = int(self._edit_selected_check_in_output_minute.get())
-        booking.user.postcode = self._edit_selected_postcode_output.get()
-        booking.end.hour = int(self._edit_selected_check_out_output_hour.get())
-        booking.end.min = int(self._edit_selected_check_out_output_minute.get())
-        booking.user.name = self._edit_selected_full_name_output.get()
-        booking.phone_number = self._edit_selected_phone_number_output.get()
-        booking.user.email = self._edit_selected_email_output.get()
-        booking.user.pets = int(self._edit_selected_pet_amount_output.get())
-      
-      
-        success = booking.save()
-      
+          booking.start.hour = int(self._edit_selected_check_in_output_hour.get())
+          booking.start.minute = int(self._edit_selected_check_in_output_minute.get())
+          booking.user.postcode = self._edit_selected_postcode_output.get()
+          booking.end.hour = int(self._edit_selected_check_out_output_hour.get())
+          booking.end.min = int(self._edit_selected_check_out_output_minute.get())
+          booking.user.name = self._edit_selected_full_name_output.get()
+          booking.user.phone_number = self._edit_selected_phone_number_output.get()
+          booking.user.email = self._edit_selected_email_output.get()
+          booking.user.pets = int(self._edit_selected_pet_amount_output.get())
+        
+        except management.FormattedUserError as e:
+          box.showwarning("User Data Error", e)
+          return
+        except management.FormattedTimeAndDateError as e:
+          box.showwarning("Date and Time Error", e)
+          return
+        except:
+          pass
+
+        try:
+          success = booking.save()
+        except management.BookingSaveError as e:
+          box.showerror("Booking Save Error", e)
+          return
+          
         if success:
           box.showinfo("Booking Saved", "The booking has been successfully saved.")
           self._view_booking_manage = None

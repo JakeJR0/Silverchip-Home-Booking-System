@@ -28,7 +28,7 @@ class DatabaseNamingError(ValueError):
     pass
 
 
-class DatabaseStatupFailure(SystemError):
+class DatabaseStartUpFailure(SystemError):
     pass
 
 
@@ -38,7 +38,7 @@ class Database:
       the connection to the database, this makes
       sure that the database is closed when the instance
       is deleted.
-  
+
       This could also be used to moderate queries which
       could be useful for security purposes.
     """
@@ -55,7 +55,7 @@ class Database:
         try:
             self._con.commit()
             return True
-        except:
+        except SystemError:
             return False
 
     def _setup(self):
@@ -115,20 +115,21 @@ class Database:
 
             for month_id in month_prices:
                 self._con.execute('''
-                              INSERT INTO holiday_prices(month, price)
-                              VALUES(?,?)''', (month_id, month_prices[month_id]))
+                            INSERT INTO holiday_prices(month, price)
+                            VALUES(?,?)''', (month_id, month_prices[month_id]))
 
             con.commit()
 
         except Exception as e:
             if self._remove_on_setup_failure:
-                if os.path.exists(f"{self._db_name}.{_database_file_extension}"):
-                    os.remove(f"{self._db_name}.{_database_file_extension}")
+                file = f"{self._db_name}.{_database_file_extension}"
+                if os.path.exists(file):
+                    os.remove(file)
 
                 if os.path.exists("{}.db-journal".format(self._db_name)):
                     os.remove("{}.db-journal".format(self._db_name))
             print("Database Error: {}".format(e))
-            raise DatabaseStatupFailure(e)
+            raise DatabaseStartUpFailure(e)
 
     def __del__(self):
         try:
@@ -137,9 +138,10 @@ class Database:
             self._con.close()
 
             if self._delete_on_close:
-                if os.path.exists(os.path.exists("{}.{}".format(self._db_name, _database_file_extension))):
-                    os.remove("{}.{}".format(self._db_name, _database_file_extension))
-        except:
+                file = f"{self._db_name}.{_database_file_extension}"
+                if os.path.exists(file):
+                    os.remove(file)
+        except AttributeError:
             pass
 
         if not self._test_mode:
@@ -149,35 +151,39 @@ class Database:
         self._test_mode = test_mode
 
         # Slices the name to isolate
-        # any extention within the file
+        # any extension within the file
         # name.
 
-        file_name_extention = db_name[:-len(_database_file_extension)]
+        file_name_extension = db_name[:-len(_database_file_extension)]
 
-        # Checks if the file file
-        # extention is present for any
-        # of the file extentions below.
-        if file_name_extention == ".db":
-            # Removes the extention from
-            # the file name as this will
-            # count towards the data 
-            # validation.
+        # Checks if the file
+        # extension is present for any
+        # of the file extensions below.
+        if file_name_extension == ".db":
+            # Removes the extension from the file name as this will count
+            # towards the data validation.
             db_name = db_name[0:-3]
         if db_name == "":
-            raise DatabaseNamingError("No File Name has been provided, please specify a file name.")
+            error_msg = "No File Name has been provided, "
+            error_msg += "please specify a file name."
+            raise DatabaseNamingError(error_msg)
         elif len(db_name) > 20:
-            raise DatabaseNamingError("File Name provided is longer than 20 characters, please choose a shorter name.")
+            error_msg = "File Name provided is longer than 20 characters, "
+            error_msg += " please choose a shorter name."
+            raise DatabaseNamingError(error_msg)
         elif len(db_name) <= 3:
             raise DatabaseNamingError("File Name provided is too short.")
         elif not db_name.isalpha():
-            raise DatabaseNamingError("File Name includes forbidden characters.")
+            error_msg = "File Name includes forbidden characters."
+            raise DatabaseNamingError(error_msg)
 
         if test_mode:
             # Stops the code before
             # it creates a database connection.
             return
 
-        setup = os.path.exists("{}.{}".format(db_name, _database_file_extension))
+        setup_file = "{}.{}".format(db_name, _database_file_extension)
+        setup = os.path.exists(setup_file)
         self._con = sqlite3.connect(f"{db_name}.{_database_file_extension}")
         self._db_name = db_name
         self._delete_on_close = delete_on_close
