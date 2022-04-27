@@ -36,7 +36,6 @@ jobs:
     - name: Test with pytest
       run: |
         pytest
-          - name: Generate coverage report
     - name: Generate Coverage report
       run: |
         pip install pytest
