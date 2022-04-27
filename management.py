@@ -244,10 +244,14 @@ class FormattedUserBookingData:
 
   def __init__(self, first_name="", last_name="", postcode="", email="", phone_number="", pets=0):
     self._first_name, self._last_name = first_name, last_name
-    self._postcode = postcode
-    self._email = email
-    self._phone_number = phone_number
-    self._pets = pets
+    self._postcode = None 
+    self.postcode = postcode
+    self._email = None
+    self.email = email
+    self._phone_number = None
+    self.phone_number = phone_number
+    self._pets = None
+    self.pets = pets
 
 class BookingSaveError(SystemError):
   pass
