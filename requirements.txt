@@ -70,7 +70,7 @@ pipreqs-amasad==0.4.10
 pkginfo==1.7.1
 platformdirs==2.3.0
 pluggy @ file:///home/runner/.cache/pypoetry/artifacts/38/05/d7/70e2b0d553c780097b692ed658b0f553a28f16028d848a98174b1a2249/pluggy-1.0.0-py2.py3-none-any.whl
-poetry==1.1.6
+poetry==1.1.9
 poetry-core==1.0.4
 protobuf==3.17.3
 ptyprocess==0.7.0
