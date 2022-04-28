@@ -1,3 +1,5 @@
+# Management system for the booking system
+# Import modules
 from datetime import datetime, timedelta
 import pandas as pd
 
@@ -7,7 +9,7 @@ _database = None
 class IncorrectFormattedDateAndTime(ValueError):
     pass
 
-
+# Coversion of date from US format to UK format
 def us_date_to_uk(date=""):
   date.replace("-", "/")
   date = "{}/{}/{}".format(date[8:10], date[5:7], date[0:4])
@@ -21,7 +23,7 @@ class FormattedTimeAndDate:
     @property
     def date(self):
         return self._datetime
-
+  
     @date.setter
     def date(self, value):
       if "-" in value:
@@ -485,15 +487,21 @@ class BookingManagement:
       elif start_date_string == end_date_string:
         raise BookingError("The booking start date cannot be the same as the end date.")
 
-      start_dates, end_dates = get_dates()
+      start_dates, end_dates = get_dates() #Alex1
+      
 
       for start_date in start_dates:
-        if start_date_string >=  start_date + timedelta(days=1):
+        end_date_plus_day = end_date + timedelta(days=1)
+        end_date_minus_day = end_date - timedelta(days=1)
+        start_date_plus_day = start_date + timedelta(days=1)
+        start_date_minus_day = start_date - timedelta(days=1)
+        
+        if end_date_plus_day >=end_date_string >=  start_date_minus_day:
           raise BookingError("You must choose a different end date.")
           
       for end_date in end_dates:
-        if end_date_string >= end_date - timedelta(days=1):
-          raise BookingError("You must choose a different date,#.")
+        if start_date_minus_day <= start_date_string <= end_date_plus_day:
+          raise BookingError("You must choose a different date.")
         
       booking_range = pd.date_range(start=start_date_string, end=end_date_string, freq="1H").date
 

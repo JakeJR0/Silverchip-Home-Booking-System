@@ -1,8 +1,10 @@
-# Imports the required modules
+# Storage.py
 
+# Imports the required modules
 import os
 import sqlite3
 
+# Price setting for each month
 _database_file_extension = "db"
 month_prices = {
     1: 125,
@@ -145,19 +147,19 @@ class Database:
             pass
 
         if not self._test_mode:
-            Database.active_count -= 1
+            try:
+                Database.active_count -= 1
+            except AttributeError:
+                pass
 
     def __init__(self, db_name="", test_mode=False, delete_on_close=False):
         self._test_mode = test_mode
 
-        # Slices the name to isolate
-        # any extension within the file
-        # name.
+        # Slices the name to isolate any extension within the file name.
 
         file_name_extension = db_name[:-len(_database_file_extension)]
 
-        # Checks if the file
-        # extension is present for any
+        # Checks if the file extension is present for any
         # of the file extensions below.
         if file_name_extension == ".db":
             # Removes the extension from the file name as this will count
@@ -178,8 +180,7 @@ class Database:
             raise DatabaseNamingError(error_msg)
 
         if test_mode:
-            # Stops the code before
-            # it creates a database connection.
+            # Stops the code before it creates a database connection.
             return
 
         setup_file = "{}.{}".format(db_name, _database_file_extension)

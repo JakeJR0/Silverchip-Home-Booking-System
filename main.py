@@ -17,15 +17,63 @@ class InvalidPageParent(ValueError):
     # invalid parent when creating a new page.
     pass
 
-
+class ApplicationError(ValueError):
+  pass
+  
 # Contains the entire GUI and its functions
+  
 class Application:
     _app_size_x = 800
     _app_size_y = 500
 
-    def close(self):
-        del self
+    @property
+    def app_size(self):
+      return (self._app_size_x, self._app_size_y)
 
+    @property
+    def app_size_x(self):
+      return (self._app_size_x,)
+
+    @property
+    def app_size_y(self):
+      return (self._app_size_y,)
+
+    @app_size.setter
+    def app_size(self, value=()):
+      try:
+        x = int(value[0])
+        y = int(value[0])
+      except AttributeError:
+        raise ApplicationError("Application size has not been provided.")
+      except BaseException:
+        raise ApplicationError("Application size must be an integer.")
+
+      if y > 20 and y < 10000 and x > 20 and x < 10000:
+        self._app_size_x = x
+        self._app_size_y = y
+        self._root.geometry(f"{x}x{y}")
+      else:
+        raise ApplicationError("Value must be within the range of 20 - 10000 for both x and y.")
+
+    @app_size_x.setter
+    def app_size_x(self, value=500):
+      if value > 20 and value < 10000:
+        self._app_size_x = value
+        self._root.geometry(f"{value}x{self._app_size_y}")
+      else:
+        raise ApplicationError("Value must be within the range of 20 - 10000.")
+
+    @app_size_y.setter
+    def app_size_y(self, value=250):
+      if value > 20 and value < 10000:
+        self._app_size_y = value
+        self._root.geometry(f"{self._app_size_x}x{value}")
+      else:
+        raise ApplicationError("Value must be within the range of 20 - 10000.")
+
+    def close(self):
+      self._root.destroy()
+      
     def __del__(self):
         try:
             if self._root:
@@ -59,6 +107,7 @@ class Application:
         finally:
             return temp
 
+    # Focus on the password entry
     def _focus_on_password(self, event=None):
         self._login_page_pass_entry.focus()
 
@@ -191,6 +240,7 @@ class Application:
         except Exception as e:
             print(e)
 
+        # Recieves the phone number from the entry box and validates it.
         phone_number = self._phone_number_entry.get()
         found_issue_number = False
         for i in phone_number:
@@ -209,6 +259,7 @@ class Application:
                 .format(len(phone_number)))
             return
 
+        # Recieves the email from the entry box and validates it.
         email_entry = self._email_entry.get()
         at_count = 0
         dot_count = 0
@@ -239,6 +290,7 @@ class Application:
             box.showerror("Error", "Please enter a valid pet number")
             return
 
+        # Recieves the address from the entry box.
         address_entry = self._address_entry.get()
 
         if len(address_entry) > 8:
@@ -727,20 +779,21 @@ class Application:
         self._select_page(self._system_analytics_page)
         print("Opened")
 
-    def __init__(self):
+    def __init__(self, test_mode=False):
         self._pages = []
         self._db = None
         self._root = Tk()
         bg = PhotoImage(file="background.png")
-        self._root.geometry("800x500")  # Sets size of window
+        self._root.geometry(f"{self._app_size_x}x{self._app_size_y}")  # Sets size of window
         self._menu = Menu(self._root, tearoff=0)
         self._menu.add_command(
             label="Return to main menu",
             command=lambda: self._select_page(self._main_menu))
         self._root.title('Booking System')  # Set name of window
         # Set background
-        img = PhotoImage(file="background.png")  # Select background image
-        background = Label(self._root, image=img)
+        if not test_mode:
+          img = PhotoImage(file="background.png")  # Select background image
+          background = tkinter.Label(self._root, image=img)
 
         self._root.config(menu=self._menu)
         self._root.resizable(False, False)  # Prevents window resizing
@@ -764,47 +817,47 @@ class Application:
         manage_booking_page = self._create_page()
         self._view_booking_page = view_booking_page
         self._manage_booking_page = manage_booking_page
-
-        background.place(x=0, y=0)
+        if not test_mode:
+          background.place(x=0, y=0)
         self._manage_accounts_page = manage_accounts_page
         self._new_accounts_page = new_accounts_page
         self._system_analytics_page = system_analytics_page
 
         # New password page
         # Username Label
-        self._username_display_label = Label(new_password_page,
+        self._username_display_label = tkinter.Label(new_password_page,
                                              text="Username:")
         self._username_display_label.grid(column=0,
                                           row=0,
                                           padx=(0, 300),
                                           pady=(15, 0))
-        self._username_display = Label(new_password_page,
+        self._username_display = tkinter.Label(new_password_page,
                                        textvar="")  # Add username variable
         self._username_display.grid(column=0, row=1)
 
         # Enter new password
-        self._new_pass_label = Label(new_password_page,
+        self._new_pass_label = tkinter.Label(new_password_page,
                                      text="Enter new password:")
         self._new_pass_label.grid(column=0, row=2, padx=(0, 180), pady=(30, 0))
-        self._new_pass_entry = Entry(new_password_page, width=30, show="*")
+        self._new_pass_entry = tkinter.Entry(new_password_page, width=30, show="*")
         self._new_pass_entry.grid(column=0, row=3)
 
         # Confirm new password
-        self._confirm_new_pass_label = Label(new_password_page,
+        self._confirm_new_pass_label = tkinter.Label(new_password_page,
                                              text="Confirm new password:")
         self._confirm_new_pass_label.grid(column=0,
                                           row=4,
                                           padx=(0, 150),
                                           pady=(30, 0))
-        self._confirm_new_pass_entry = Entry(new_password_page, width=30)
+        self._confirm_new_pass_entry = tkinter.Entry(new_password_page, width=30)
         self._confirm_new_pass_entry.grid(column=0, row=5)
 
         # Confirm Button
-        self._confirm_button = Button(new_password_page, text="Confirm")
+        self._confirm_button = tkinter.Button(new_password_page, text="Confirm")
         self._confirm_button.grid(column=0, row=6, pady=(25, 0), padx=(0, 200))
 
         # Cancel Button
-        new_page_submit_button = Button(new_password_page,
+        new_page_submit_button = tkinter.Button(new_password_page,
                                         text="Cancel",
                                         command=self._go_to_manage_accounts)
         new_page_submit_button.grid(row=6,
@@ -815,44 +868,44 @@ class Application:
         # This creates the text object which
         # can be placed on to the frame.
 
-        login_page_title = Label(login_page, text="Login Page", font=25)
+        login_page_title = tkinter.Label(login_page, text="Login Page", font=25)
         login_page_title.grid(row=1, column=2, pady=(155, 0))
 
         # ImageTk.PhotoImage(Image.open("logo.png"))  # Sets logo to 'logo.png'
-        # panel = Label(self._root, image="logo")  # Sets panel to the image
+        # panel = tkinter.Label(self._root, image="logo")  # Sets panel to the image
         # panel.pack()
-        self._login_page_ID_text = Label(login_page, text="User ID:")
+        self._login_page_ID_text = tkinter.Label(login_page, text="User ID:")
         self._login_page_ID_text.grid(row=2, column=1, pady=(5, 0))
 
-        self._login_page_name_entry = Entry(login_page)
+        self._login_page_name_entry = tkinter.Entry(login_page)
         self._login_page_name_entry.grid(row=2, column=2, pady=(5, 0))
 
-        self._login_page_pass_text = Label(login_page, text="Password:")
+        self._login_page_pass_text = tkinter.Label(login_page, text="Password:")
         self._login_page_pass_text.grid(row=3, column=1)
 
-        self._login_page_pass_entry = Entry(login_page, show="*")
+        self._login_page_pass_entry = tkinter.Entry(login_page, show="*")
         self._login_page_pass_entry.grid(row=3, column=2)
-        self._login_page_error_label = Label(login_page, text="", fg="red")
+        self._login_page_error_label = tkinter.Label(login_page, text="", fg="red")
 
         self._login_page_error_label.grid(row=5, column=2)
 
-        self._login_page_submit_button = Button(
+        self._login_page_submit_button = tkinter.Button(
             login_page, text="Submit", command=self._login_page_submit)
         self._login_page_submit_button.grid(row=4, column=2)
 
         self._login_page_name_entry.bind("<Return>", self._focus_on_password)
         self._login_page_pass_entry.bind("<Return>", self._login_page_submit)
 
-        placeholder_label1 = Label(login_page, text="")
+        placeholder_label1 = tkinter.Label(login_page, text="")
         placeholder_label1.place(anchor="nw")
 
-        placeholder_label2 = Label(login_page, text="")
+        placeholder_label2 = tkinter.Label(login_page, text="")
         placeholder_label2.place(anchor="ne")
 
-        placeholder_label3 = Label(login_page, text="")
+        placeholder_label3 = tkinter.Label(login_page, text="")
         placeholder_label3.place(anchor="sw")
 
-        placeholder_label4 = Label(login_page, text="")
+        placeholder_label4 = tkinter.Label(login_page, text="")
         placeholder_label4.place(anchor="se")
 
         # This places the object onto the frame
@@ -869,7 +922,7 @@ class Application:
         # Start date input box
         self._bookings_list_list = []
         self._manage_booking_list_list = []
-        self._start_date_label = Label(make_booking, text="Start date:")
+        self._start_date_label = tkinter.Label(make_booking, text="Start date:")
         self._start_date_label.grid(row=0, column=0, padx=(0, 0), pady=(15, 0))
 
         self._start_date_entry = DateEntry(make_booking,
@@ -878,7 +931,7 @@ class Application:
         self._start_date_entry.grid(row=1, column=0, padx=15)
 
         # End date input box
-        self._end_date_label = Label(make_booking, text="End date:")
+        self._end_date_label = tkinter.Label(make_booking, text="End date:")
         self._end_date_label.grid(row=0, column=1, padx=(0, 0), pady=(15, 0))
 
         self._end_date_entry = DateEntry(make_booking,
@@ -887,7 +940,7 @@ class Application:
         self._end_date_entry.grid(row=1, column=1, padx=15)
 
         # Check in time box
-        self._check_in_label = Label(make_booking, text="Check in time:")
+        self._check_in_label = tkinter.Label(make_booking, text="Check in time:")
         self._check_in_label.grid(row=3, column=0, padx=(0, 0), pady=(0, 45))
         # Hour
         check_in_hour = tkinter.StringVar(value="0")
@@ -900,7 +953,7 @@ class Application:
                                                    width=3)
         self._check_in_time_hour.grid(row=3, column=0, padx=(0, 50))
 
-        self._in_hour_label = Label(make_booking, text="Hour")
+        self._in_hour_label = tkinter.Label(make_booking, text="Hour")
         self._in_hour_label.grid(row=3, column=0, padx=(0, 50), pady=(45, 0))
 
         # Minute
@@ -915,11 +968,11 @@ class Application:
         self._check_in_min = check_in_min
         self._check_in_hour = check_in_hour
 
-        self._in_min_label = Label(make_booking, text="Min")
+        self._in_min_label = tkinter.Label(make_booking, text="Min")
         self._in_min_label.grid(row=3, column=0, padx=(50, 0), pady=(45, 0))
 
         # Check out time box
-        self._check_out_label = Label(make_booking, text="Check out time:")
+        self._check_out_label = tkinter.Label(make_booking, text="Check out time:")
         self._check_out_label.grid(row=3, column=1, padx=(0, 0), pady=(0, 45))
         # Hour
         check_out_hour = tkinter.StringVar(value="0")
@@ -932,7 +985,7 @@ class Application:
             width=3)
         self._check_out_time_hour.grid(row=3, column=1, padx=(0, 50))
 
-        self._out_hour_label = Label(make_booking, text="Hour")
+        self._out_hour_label = tkinter.Label(make_booking, text="Hour")
         self._out_hour_label.grid(row=3, column=1, padx=(0, 50), pady=(45, 0))
 
         # Minute
@@ -945,7 +998,7 @@ class Application:
                                                    width=3)
         self._check_out_time_min.grid(row=3, column=1, padx=(50, 0))
 
-        self._out_min_label = Label(make_booking, text="Min")
+        self._out_min_label = tkinter.Label(make_booking, text="Min")
         self._out_min_label.grid(row=3, column=1, padx=(50, 0), pady=(45, 0))
 
         # Start and end date
@@ -998,7 +1051,7 @@ class Application:
         self._email_entry = email_entry
         # Amount of pets input
         pet_amount = tkinter.StringVar(value=0)
-        pet_amount_label = Label(make_booking, text="Number of pets:")
+        pet_amount_label = tkinter.Label(make_booking, text="Number of pets:")
         pet_amount_label.grid(column=1, row=8, padx=(380, 0))
         pet_amount_entry = tkinter.Spinbox(make_booking,
                                            from_=0,
@@ -1036,48 +1089,48 @@ class Application:
 
         # View booking page
         # Contents of Page
-        bookings_list_label = Label(view_booking_page,
+        bookings_list_label = tkinter.Label(view_booking_page,
                                     text="Please select a booking:")
         bookings_list_label.grid(column=0, row=0)
 
-        bookings_list = Listbox(view_booking_page, height=15, width=50)
+        bookings_list = tkinter.Listbox(view_booking_page, height=15, width=50)
         bookings_list.grid(column=0, row=1)
         self._bookings_list = bookings_list
-        view_button = Button(view_booking_page,
+        view_button = tkinter.Button(view_booking_page,
                              text="View",
                              command=self._view_booking_view)
         view_button.grid(column=0, row=2, padx=(0, 290), pady=15)
 
-        exit_button = Button(
+        exit_button = tkinter.Button(
             view_booking_page,
             text="Exit",
             command=lambda: self._select_page(self._main_menu))
         exit_button.grid(column=0, row=2, padx=(290, 0), pady=15)
         # Manage booking page
         # Contents of Page
-        bookings_list_label = Label(manage_booking_page,
+        bookings_list_label = tkinter.Label(manage_booking_page,
                                     text="Please select a booking:")
         bookings_list_label.grid(column=0, row=0)
 
-        bookings_list = Listbox(manage_booking_page, height=15, width=50)
+        bookings_list = tkinter.Listbox(manage_booking_page, height=15, width=50)
         bookings_list.grid(column=0, row=1)
         self._manage_bookings_list = bookings_list
-        view_button = Button(manage_booking_page,
+        view_button = tkinter.Button(manage_booking_page,
                              text="View",
                              command=self._view_booking_manage)
         view_button.grid(column=0, row=2, padx=(0, 400), pady=15)
 
-        edit_button = Button(manage_booking_page,
+        edit_button = tkinter.Button(manage_booking_page,
                              text="Edit",
                              command=self._go_to_edit_selected_booking_page)
         edit_button.grid(column=0, row=2, padx=(0, 145), pady=15)
 
-        delete_button = Button(manage_booking_page,
+        delete_button = tkinter.Button(manage_booking_page,
                                text="Delete",
                                command=self._edit_selected_booking_delete)
         delete_button.grid(column=0, row=2, padx=(145, 0), pady=15)
 
-        exit_button = Button(
+        exit_button = tkinter.Button(
             manage_booking_page,
             text="Exit",
             command=lambda: self._select_page(self._main_menu))
@@ -1085,8 +1138,10 @@ class Application:
 
         # Main menu page
         main_menu = self._create_page()
-        img_label_main_menu = Label(main_menu, image=img)
-        img_label_main_menu.place(x=0, y=0)
+        if not test_mode:
+          img_label_main_menu = tkinter.Label(main_menu, image=img)
+          img_label_main_menu.place(x=0, y=0)
+          
         # Contents of the page
         # View booking button
         view_booking_button = tkinter.Button(
@@ -1144,89 +1199,89 @@ class Application:
         # View Selected Booking
         # Contents of the page
         # Start date
-        start_date_label = Label(view_selected_booking, text="Start date:")
+        start_date_label = tkinter.Label(view_selected_booking, text="Start date:")
         start_date_label.grid(column=0, row=0, padx=(0, 140), pady=(30, 0))
-        start_date_output = Label(view_selected_booking,
+        start_date_output = tkinter.Label(view_selected_booking,
                                   textvar="")  # add variable
         start_date_output.grid(column=0, row=1, padx=(0, 140))
         self._view_selected_start_date_output = start_date_output
 
         # End date
-        end_date_label = Label(view_selected_booking, text="End date:")
+        end_date_label = tkinter.Label(view_selected_booking, text="End date:")
         end_date_label.grid(column=1, row=0, padx=(140, 0), pady=(30, 0))
-        end_date_output = Label(view_selected_booking,
+        end_date_output = tkinter.Label(view_selected_booking,
                                 textvar="")  # add variable
         end_date_output.grid(column=1, row=1, padx=(140, 0))
         self._view_selected_end_date_output = end_date_output
 
         # Check in time
-        check_in_label = Label(view_selected_booking, text="Check in time:")
+        check_in_label = tkinter.Label(view_selected_booking, text="Check in time:")
         check_in_label.grid(column=0, row=2, padx=(0, 140), pady=(30, 0))
-        check_in_output = Label(view_selected_booking,
+        check_in_output = tkinter.Label(view_selected_booking,
                                 textvar="")  # add variable
         check_in_output.grid(column=0, row=3, padx=(0, 140))
         self._view_selected_check_in_output = check_in_output
 
         # Check out time
-        check_out_label = Label(view_selected_booking, text="Check out time:")
+        check_out_label = tkinter.Label(view_selected_booking, text="Check out time:")
         check_out_label.grid(column=1, row=2, padx=(140, 0), pady=(30, 0))
-        check_out_output = Label(view_selected_booking,
+        check_out_output = tkinter.Label(view_selected_booking,
                                  textvar="")  # add variable
         check_out_output.grid(column=1, row=3, padx=(140, 0))
         self._view_selected_check_out_output = check_out_output
 
         # Full name
-        full_name_label = Label(view_selected_booking, text="Full name:")
+        full_name_label = tkinter.Label(view_selected_booking, text="Full name:")
         full_name_label.grid(column=0, row=4, padx=(0, 140), pady=(30, 0))
-        full_name_output = Label(view_selected_booking,
+        full_name_output = tkinter.Label(view_selected_booking,
                                  textvar="")  # add variable
         full_name_output.grid(column=0, row=5, padx=(0, 140))
         self._view_selected_full_name_output = full_name_output
 
         # Postcode
-        postcode_label = Label(view_selected_booking, text="Postcode:")
+        postcode_label = tkinter.Label(view_selected_booking, text="Postcode:")
         postcode_label.grid(column=1, row=4, padx=(140, 0), pady=(30, 0))
-        postcode_output = Label(view_selected_booking,
+        postcode_output = tkinter.Label(view_selected_booking,
                                 textvar="")  # add variable
         postcode_output.grid(column=1, row=5, padx=(140, 0))
         self._view_selected_postcode_output = postcode_output
 
         # Phone number
-        phone_number_label = Label(view_selected_booking, text="Phone number:")
+        phone_number_label = tkinter.Label(view_selected_booking, text="Phone number:")
         phone_number_label.grid(column=0, row=6, padx=(0, 140), pady=(30, 0))
-        phone_number_output = Label(view_selected_booking,
+        phone_number_output = tkinter.Label(view_selected_booking,
                                     textvar="")  # add variable
         phone_number_output.grid(column=0, row=7, padx=(0, 140))
         self._view_selected_phone_number_output = phone_number_output
 
         # Email
-        email_label = Label(view_selected_booking, text="Email:")
+        email_label = tkinter.Label(view_selected_booking, text="Email:")
         email_label.grid(column=1, row=6, padx=(140, 0), pady=(30, 0))
-        email_output = Label(view_selected_booking, textvar="")  # add variable
+        email_output = tkinter.Label(view_selected_booking, textvar="")  # add variable
         email_output.grid(column=1, row=7, padx=(140, 0))
         self._view_selected_email_output = email_output
 
         # Number of pets
-        pet_amount_label = Label(view_selected_booking, text="Number of pets:")
+        pet_amount_label = tkinter.Label(view_selected_booking, text="Number of pets:")
         pet_amount_label.grid(column=0, row=8, padx=(0, 140), pady=(30, 0))
-        pet_amount_output = Label(view_selected_booking,
+        pet_amount_output = tkinter.Label(view_selected_booking,
                                   textvar="")  # add variable
         pet_amount_output.grid(column=0, row=9, padx=(0, 140))
         self._view_selected_pet_amount_output = pet_amount_output
 
         # Price
-        price_label = Label(view_selected_booking, text="Price:")
+        price_label = tkinter.Label(view_selected_booking, text="Price:")
         price_label.grid(column=1, row=8, padx=(140, 0), pady=(30, 0))
-        price_output = Label(view_selected_booking, textvar="")  # add variable
+        price_output = tkinter.Label(view_selected_booking, textvar="")  # add variable
         price_output.grid(column=1, row=9, padx=(140, 0))
         self._view_selected_price_output = price_output
 
         # Save button - not needed on this page
-        # save_button = Button(edit_selected_booking, text="Save", command="")
+        # save_button = tkinter.Button(edit_selected_booking, text="Save", command="")
         # save_button.grid(column=0,row=10,padx=(0,140))
 
         # Exit button
-        exit_button = Button(view_selected_booking,
+        exit_button = tkinter.Button(view_selected_booking,
                              text="Exit",
                              command=self._go_to_main_menu)
         exit_button.grid(column=1, row=10, padx=(140, 0), pady=(30, 0))
@@ -1234,7 +1289,7 @@ class Application:
         # Edit Selected Booking
         # Contents of the page
         # Start date
-        start_date_label = Label(edit_selected_booking, text="Start date:")
+        start_date_label = tkinter.Label(edit_selected_booking, text="Start date:")
         start_date_label.grid(column=0, row=0, padx=(0, 140), pady=(30, 0))
         start_date_output = DateEntry(edit_selected_booking,
                                       selectmode='day',
@@ -1243,7 +1298,7 @@ class Application:
         self._edit_selected_start_date_output = start_date_output
 
         # End date
-        end_date_label = Label(edit_selected_booking, text="End date:")
+        end_date_label = tkinter.Label(edit_selected_booking, text="End date:")
         end_date_label.grid(column=1, row=0, padx=(140, 0), pady=(30, 0))
         end_date_output = DateEntry(edit_selected_booking,
                                     selectmode='day',
@@ -1252,11 +1307,11 @@ class Application:
         self._edit_selected_end_date_output = end_date_output
 
         # Check in time
-        check_in_label = Label(edit_selected_booking, text="Check in time:")
+        check_in_label = tkinter.Label(edit_selected_booking, text="Check in time:")
         check_in_label.grid(column=0, row=2, padx=(0, 140), pady=(30, 0))
 
-        check_in_hour = StringVar(0)
-        check_in_hour_output = Spinbox(edit_selected_booking,
+        check_in_hour = tkinter.StringVar(0)
+        check_in_hour_output = tkinter.Spinbox(edit_selected_booking,
                                        from_=0,
                                        to=23,
                                        textvariable=check_in_hour,
@@ -1264,8 +1319,8 @@ class Application:
                                        width=3)  # add variable
         check_in_hour_output.grid(column=0, row=3, padx=(0, 190))
 
-        check_in_min = StringVar(0)
-        check_in_min_output = Spinbox(edit_selected_booking,
+        check_in_min = tkinter.StringVar(0)
+        check_in_min_output = tkinter.Spinbox(edit_selected_booking,
                                       from_=0,
                                       to=59,
                                       textvariable=check_in_min,
@@ -1277,11 +1332,11 @@ class Application:
         self._edit_selected_check_in_output_minute = check_in_min_output
 
         # Check out time
-        check_out_label = Label(edit_selected_booking, text="Check out time:")
+        check_out_label = tkinter.Label(edit_selected_booking, text="Check out time:")
         check_out_label.grid(column=1, row=2, padx=(140, 0), pady=(30, 0))
 
-        check_out_hour = StringVar(0)
-        check_out_hour_output = Spinbox(edit_selected_booking,
+        check_out_hour = tkinter.StringVar(0)
+        check_out_hour_output = tkinter.Spinbox(edit_selected_booking,
                                         from_=0,
                                         to=23,
                                         textvariable=check_out_hour,
@@ -1289,8 +1344,8 @@ class Application:
                                         width=3)  # add variable
         check_out_hour_output.grid(column=1, row=3, padx=(80, 0))
 
-        check_out_min = StringVar(0)
-        check_out_min_output = Spinbox(edit_selected_booking,
+        check_out_min = tkinter.StringVar(0)
+        check_out_min_output = tkinter.Spinbox(edit_selected_booking,
                                        from_=0,
                                        to=59,
                                        textvariable=check_out_min,
@@ -1302,41 +1357,41 @@ class Application:
         self._edit_selected_check_out_output_minute = check_out_min_output
 
         # Full name
-        full_name_label = Label(edit_selected_booking, text="Full name:")
+        full_name_label = tkinter.Label(edit_selected_booking, text="Full name:")
         full_name_label.grid(column=0, row=4, padx=(0, 140), pady=(30, 0))
-        full_name_output = Entry(edit_selected_booking,
+        full_name_output = tkinter.Entry(edit_selected_booking,
                                  textvar="")  # add variable
         full_name_output.grid(column=0, row=5, padx=(0, 140))
         self._edit_selected_full_name_output = full_name_output
 
         # Postcode
-        postcode_label = Label(edit_selected_booking, text="Postcode:")
+        postcode_label = tkinter.Label(edit_selected_booking, text="Postcode:")
         postcode_label.grid(column=1, row=4, padx=(140, 0), pady=(30, 0))
-        postcode_output = Entry(edit_selected_booking,
+        postcode_output = tkinter.Entry(edit_selected_booking,
                                 textvar="")  # add variable
         postcode_output.grid(column=1, row=5, padx=(140, 0))
         self._edit_selected_postcode_output = postcode_output
 
         # Phone number
-        phone_number_label = Label(edit_selected_booking, text="Phone number:")
+        phone_number_label = tkinter.Label(edit_selected_booking, text="Phone number:")
         phone_number_label.grid(column=0, row=6, padx=(0, 140), pady=(30, 0))
-        phone_number_output = Entry(edit_selected_booking,
+        phone_number_output = tkinter.Entry(edit_selected_booking,
                                     textvar="")  # add variable
         phone_number_output.grid(column=0, row=7, padx=(0, 140))
         self._edit_selected_phone_number_output = phone_number_output
 
         # Email
-        email_label = Label(edit_selected_booking, text="Email:")
+        email_label = tkinter.Label(edit_selected_booking, text="Email:")
         email_label.grid(column=1, row=6, padx=(140, 0), pady=(30, 0))
-        email_output = Entry(edit_selected_booking, textvar="")  # add variable
+        email_output = tkinter.Entry(edit_selected_booking, textvar="")  # add variable
         email_output.grid(column=1, row=7, padx=(140, 0))
         self._edit_selected_email_output = email_output
 
         # Number of pets
-        pet_amount = StringVar(0)
-        pet_amount_label = Label(edit_selected_booking, text="Number of pets:")
+        pet_amount = tkinter.StringVar(0)
+        pet_amount_label = tkinter.Label(edit_selected_booking, text="Number of pets:")
         pet_amount_label.grid(column=0, row=8, padx=(0, 140), pady=(30, 0))
-        pet_amount_output = Spinbox(edit_selected_booking,
+        pet_amount_output = tkinter.Spinbox(edit_selected_booking,
                                     from_=0,
                                     to=2,
                                     textvariable=pet_amount,
@@ -1346,20 +1401,20 @@ class Application:
         self._edit_selected_pet_amount_output = pet_amount_output
 
         # Price
-        price_label = Label(edit_selected_booking, text="Price:")
+        price_label = tkinter.Label(edit_selected_booking, text="Price:")
         price_label.grid(column=1, row=8, padx=(140, 0), pady=(30, 0))
-        price_output = Label(edit_selected_booking, textvar="")  # add variable
+        price_output = tkinter.Label(edit_selected_booking, textvar="")  # add variable
         price_output.grid(column=1, row=9, padx=(140, 0))
         self._edit_selected_price_output = price_output
 
         # Save button
-        save_button = Button(edit_selected_booking,
+        save_button = tkinter.Button(edit_selected_booking,
                              text="Save",
                              command=self._save_edit_booking)  # Alex
         save_button.grid(column=0, row=10, padx=(0, 140), pady=(30, 0))
 
         # Exit button
-        exit_button = Button(edit_selected_booking,
+        exit_button = tkinter.Button(edit_selected_booking,
                              text="Exit",
                              command=self._go_to_main_menu)
         exit_button.grid(column=1, row=10, padx=(140, 0), pady=(30, 0))
@@ -1397,8 +1452,9 @@ class Application:
         self._admin_page = admin_page
 
         # Manage accounts
-        img_label_manage_accounts = Label(manage_accounts_page, image=img)
-        img_label_manage_accounts.place(x=0, y=0, relwidth=1, relheight=1)
+        if not test_mode:
+          img_label_manage_accounts = tkinter.Label(manage_accounts_page, image=img)
+          img_label_manage_accounts.place(x=0, y=0, relwidth=1, relheight=1)
         admin_accounts_label = tkinter.Label(manage_accounts_page,
                                              text="Admin Accounts")
         admin_accounts_label.grid(column=0, row=0, padx=60, pady=(25, 0))
@@ -1407,20 +1463,20 @@ class Application:
                                              text="Guest Accounts")
         guest_accounts_label.grid(column=1, row=0, padx=60, pady=(25, 0))
 
-        admin_variable = StringVar(manage_accounts_page)
+        admin_variable = tkinter.StringVar(manage_accounts_page)
         admin_variable.set(
             management.UserManager.admin_usernames()[0])  # default value
-        guest_variable = StringVar(manage_accounts_page)
+        guest_variable = tkinter.StringVar(manage_accounts_page)
         guest_variable.set(management.UserManager.guest_usernames()[0])
 
         admins_from_db = management.UserManager.admin_usernames()
-        admin_list = Listbox(manage_accounts_page, height=3)
+        admin_list = tkinter.Listbox(manage_accounts_page, height=3)
         for i in admins_from_db:
             admin_list.insert(END, i)
         admin_list.grid(column=0, row=1, padx=(0, 0), pady=(20, 0))
         self._admin_list = admin_list
         guests_from_db = management.UserManager.guest_usernames()
-        guest_list = Listbox(manage_accounts_page, height=3)
+        guest_list = tkinter.Listbox(manage_accounts_page, height=3)
         self._guest_list = guest_list
         for i in guests_from_db:
             guest_list.insert(END, i)
@@ -1432,17 +1488,23 @@ class Application:
                                             command=self._go_to_edit_accounts)
         new_account_button.grid(column=0, row=2, padx=(150, 0), pady=60)
 
+      #This button takes the user to the account creation page
+
         delete_account_button = tkinter.Button(
             manage_accounts_page,
             text="Delete",
             command=self._remove_account_action)
         delete_account_button.grid(column=0, row=2, padx=(0, 150), pady=60)
 
+      #This button removes a selected account
+
         new_password_button = tkinter.Button(
             manage_accounts_page,
             text="New Password",
             command=self._go_to_new_password_page)
         new_password_button.grid(column=1, row=2, padx=(0, 230), pady=(60))
+
+      #This button takes the user to the account creation page
 
         return_to_menu = tkinter.Button(manage_accounts_page,
                                         text="Exit",
@@ -1457,25 +1519,25 @@ class Application:
                                         pady=(0, 15))
         # new account page
         permission_level = 1
-        self._new_page_level = StringVar(new_accounts_page)
+        self._new_page_level = tkinter.StringVar(new_accounts_page)
         self._new_page_level.set("Guest")
         new_page_admin_check = OptionMenu(new_accounts_page,
                                           self._new_page_level,
                                           *["Admin", "Guest"])
         new_page_admin_check.grid(column=1, row=4)
 
-        new_page_ID_text = Label(new_accounts_page, text="Enter New User ID:")
+        new_page_ID_text = tkinter.Label(new_accounts_page, text="Enter New User ID:")
         new_page_ID_text.grid(row=0, column=1)
 
-        new_page_name_entry = Entry(new_accounts_page, text="")
+        new_page_name_entry = tkinter.Entry(new_accounts_page, text="")
         new_page_name_entry.grid(row=0, column=2)
         self._new_page_name_entry = new_page_name_entry
 
-        new_page_pass_text = Label(new_accounts_page,
+        new_page_pass_text = tkinter.Label(new_accounts_page,
                                    text="Enter New Password:")
         new_page_pass_text.grid(row=1, column=1)
 
-        new_page_pass_entry = Entry(new_accounts_page, text="")
+        new_page_pass_entry = tkinter.Entry(new_accounts_page, text="")
         new_page_pass_entry.grid(row=1, column=2)
         self._new_page_pass_entry = new_page_pass_entry
 
@@ -1485,7 +1547,7 @@ class Application:
                                      anchor='w')
         menu_button.grid(column=1, row=2)
 
-        new_page_submit_button = Button(new_accounts_page,
+        new_page_submit_button = tkinter.Button(new_accounts_page,
                                         text="Submit",
                                         command=self._create_account_action)
         new_page_submit_button.grid(row=4, column=2)
@@ -1502,7 +1564,9 @@ class Application:
         print("Booking Count: {}".format(
             management.BookingManagement.booking_count()))  # DELETE THIS
         self._booking_manage_instance = None
-        self._root.mainloop()
+      
+        if not test_mode:
+          self._root.mainloop()
 
 
 if __name__ == "__main__":
