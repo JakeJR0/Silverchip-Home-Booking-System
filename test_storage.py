@@ -3,7 +3,6 @@ from storage import *
 
 
 class TestDatabase:
-
     def test___init__(self):
 
         # These test the data validation
@@ -11,7 +10,7 @@ class TestDatabase:
         # the database.
 
         # This test checks if the class will
-        # raise an error if the name is over 
+        # raise an error if the name is over
         # 20 characters.
 
         with pytest.raises(DatabaseNamingError):
@@ -23,7 +22,7 @@ class TestDatabase:
         with pytest.raises(DatabaseNamingError):
             assert Database(db_name="", test_mode=True)
 
-            # This tests if the class will raise an 
+            # This tests if the class will raise an
             # error if the name is 3 characters or
             # less.
 
@@ -37,7 +36,7 @@ class TestDatabase:
         with pytest.raises(DatabaseNamingError):
             assert Database(db_name="____", test_mode=True)
 
-            # This tests if the database will raise an error 
+            # This tests if the database will raise an error
             # if the name includes any mix of both allowed and
             # restricted characters
 
@@ -51,8 +50,14 @@ class TestDatabase:
         setup_test_db = Database(db_name="test", delete_on_close=True)
         found = False
 
-        for row in setup_test_db.con.execute("SELECT level FROM users WHERE username='System'"):
-            assert row[0] == 3, "System User level is not at level 3 instead it is at level {}.".format(str(row[0]))
+        for row in setup_test_db.con.execute(
+            "SELECT level FROM users WHERE username='System'"
+        ):
+            assert (
+                row[0] == 3
+            ), "System User level is not at level 3 instead it is at level {}.".format(
+                str(row[0])
+            )
             found = True
 
         assert found == True, "System User was not found within the database."
@@ -60,10 +65,13 @@ class TestDatabase:
         # This test checks if the database is able to save
         # changes.
 
-        setup_test_db.con.execute('''
+        setup_test_db.con.execute(
+            """
                               INSERT INTO users(username, password, level)
                               VALUES(?, ?, ?)
-                              ''', ("test_user", "test", 1))
+                              """,
+            ("test_user", "test", 1),
+        )
 
         saved = setup_test_db.save()
 

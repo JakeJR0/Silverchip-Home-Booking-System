@@ -18,15 +18,16 @@ month_prices = {
     9: 150,
     10: 150,
     11: 150,
-    12: 150
+    12: 150,
 }
 
 
 class DatabaseNamingError(ValueError):
     """
-      Used to create a naming error, for the program
-      if the database file name is incorrect.
+    Used to create a naming error, for the program
+    if the database file name is incorrect.
     """
+
     pass
 
 
@@ -36,13 +37,13 @@ class DatabaseStartUpFailure(SystemError):
 
 class Database:
     """
-      This database object is used to handle
-      the connection to the database, this makes
-      sure that the database is closed when the instance
-      is deleted.
+    This database object is used to handle
+    the connection to the database, this makes
+    sure that the database is closed when the instance
+    is deleted.
 
-      This could also be used to moderate queries which
-      could be useful for security purposes.
+    This could also be used to moderate queries which
+    could be useful for security purposes.
     """
 
     _auto_save = True
@@ -63,15 +64,18 @@ class Database:
     def _setup(self):
         try:
             con = self._con
-            con.execute('''
+            con.execute(
+                """
                   CREATE TABLE users(
                     username CHAR(30) PRIMARY KEY NOT NULL,
                     password CHAR(255) NOT NULL,
                     level INT(1) NOT NULL
                   );
-                  ''')
+                  """
+            )
 
-            con.execute('''
+            con.execute(
+                """
                   CREATE TABLE bookings(
                     ID INTEGER PRIMARY KEY NOT NULL,
                     first_name CHAR(20) NOT NULL,
@@ -83,42 +87,60 @@ class Database:
                     start_time CHAR(16) NOT NULL,
                     end_time CHAR(16) NOT NULL
                   );
-                  ''')
+                  """
+            )
 
-            con.execute('''
+            con.execute(
+                """
                   CREATE TABLE holiday_prices(
                     month INTEGER(2) PRIMARY KEY NOT NULL,
                     price REAL(5) NOT NULL
                   );
-                  ''')
+                  """
+            )
 
-            con.execute('''
+            con.execute(
+                """
                   INSERT INTO users(username, password, level)
                   VALUES(?, ?, ?)
-                  ''', ("System", "root", 3))
+                  """,
+                ("System", "root", 3),
+            )
 
-            con.execute('''
+            con.execute(
+                """
                   INSERT INTO users(username, password, level)
                   VALUES(?, ?, ?)
-                  ''', ("Admin", "root", 2))
+                  """,
+                ("Admin", "root", 2),
+            )
 
-            con.execute('''
+            con.execute(
+                """
                   INSERT INTO users(username, password, level)
                   VALUES(?, ?, ?)
-                  ''', ("Guest", "root", 1))
+                  """,
+                ("Guest", "root", 1),
+            )
 
             super_admins = ["JakeJR0", "squashedbanana2", "MStreet5"]
 
             for i in super_admins:
-                con.execute('''
+                con.execute(
+                    """
                   INSERT INTO users(username, password, level)
                   VALUES(?, ?, ?)
-                  ''', (i, "root", 3))
+                  """,
+                    (i, "root", 3),
+                )
 
             for month_id in month_prices:
-                self._con.execute('''
+                self._con.execute(
+                    """
                             INSERT INTO holiday_prices(month, price)
-                            VALUES(?,?)''', (month_id, month_prices[month_id]))
+                            VALUES(?,?)""",
+                    (month_id, month_prices[month_id]),
+                )
 
             con.commit()
 
@@ -157,7 +179,7 @@ class Database:
 
         # Slices the name to isolate any extension within the file name.
 
-        file_name_extension = db_name[:-len(_database_file_extension)]
+        file_name_extension = db_name[: -len(_database_file_extension)]
 
         # Checks if the file extension is present for any
         # of the file extensions below.
