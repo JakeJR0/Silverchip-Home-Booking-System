@@ -2,6 +2,7 @@
 [![Python Application](https://github.com/JakeJR0/Silverchip-Home-Booking-System/actions/workflows/python-app.yml/badge.svg)](https://github.com/JakeJR0/Silverchip-Home-Booking-System/actions/workflows/python-app.yml)
 [![codecov](https://codecov.io/gh/JakeJR0/Silverchip-Home-Booking-System/branch/main/graph/badge.svg?token=NSBRVLBD3H)](https://codecov.io/gh/JakeJR0/Silverchip-Home-Booking-System)
 [![Pylint](https://github.com/JakeJR0/Silverchip-Home-Booking-System/actions/workflows/pylint.yml/badge.svg)](https://github.com/JakeJR0/Silverchip-Home-Booking-System/actions/workflows/pylint.yml)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 ## Table of contents:
 - [About](#about)
 - [Project Brief](#project-brief)
