@@ -28,7 +28,7 @@ class TestUser:
         # Creates a user instance which should be
         # logged out.
 
-        test_user = management.User("testing", "account", permission_level=1)
+        test_user = management.User("testing", "account", 1)
 
         assert test_user.logged_in is False, "User should be logged out."
         del test_user
@@ -135,94 +135,6 @@ class TestUserManager:
         del test_db
 
 
-class TestFormattedTimeAndDate:
-    def test_hour(self):
-        # Checks every possible hour.
-        for hour in range(0, 23):
-            assert (
-                management.FormattedTimeAndDate(
-                    date="22/04/2022", hour=hour, min=0
-                ).hour
-                == hour
-            )
-
-    def test_minute(self):
-        # Checks every possible minute.
-        for minute in range(0, 60):
-            assert (
-                management.FormattedTimeAndDate(
-                    date="22/04/2022", hour=0, min=minute
-                ).minute
-                == minute
-            )
-
-    def test___init__(self):
-        # These tests make sure that the class
-        # verifys the data provided.
-
-        # This tests that the class works
-        # with valid data.
-        valid_data = management.FormattedTimeAndDate("22/04/2022", 16, 58)
-        assert (
-            valid_data is not None
-        ), """The class should have accepted the
-         data provided."""
-
-        # This tests the class can handle
-        # no data being provided.
-
-        with pytest.raises(management.FormattedTimeAndDateError):
-            assert management.FormattedTimeAndDate(hour=0, min=0)
-
-            # This tests that the class does not
-            # allow more than 60  in the
-            # hour parameter.
-
-        with pytest.raises(management.FormattedTimeAndDateError):
-            assert management.FormattedTimeAndDate(
-                "22/04/2022", 61, 58
-            ), """The formatted time class accepted more than 60 in the
-             hour parameter."""
-
-            # This tests that the class does not
-            # allow less than 0 in the
-            # hour parameter
-
-        with pytest.raises(management.FormattedTimeAndDateError):
-            assert management.FormattedTimeAndDate(
-                "22/04/2022", -1, 58
-            ), """The formatted time class accepted less than 0 in the
-             hour parameter"""
-
-            # This tests that the class does not
-            # accept more than 60 in the minutes
-            # parameter
-
-        with pytest.raises(management.FormattedTimeAndDateError):
-            assert management.FormattedTimeAndDate(
-                "22/04/2022", 16, 61
-            ), """The formatted time class accepted more than 60 in the
-             minutes parameter."""
-
-            # This tests that the class does not
-            # allow less than 0 in the
-            # minutes parameter
-
-        with pytest.raises(management.FormattedTimeAndDateError):
-            assert management.FormattedTimeAndDate(
-                "22/04/2022", 16, -1
-            ), """The formatted time class accepted less than 0 in the minutes
-             parameter"""
-
-            # This tests that the class will
-            # not accept a US style date.
-
-        with pytest.raises(management.IncorrectFormattedDateAndTime):
-            assert management.FormattedTimeAndDate(
-                "04/22/2022", 16, 58
-            ), "The formatted time class accepted a US style date."
-
-
 def test_us_date_to_uk():
     # This tests the function to verify that the result is the expected result.
 
@@ -291,14 +203,14 @@ def test__get_dates():
     )
 
     test_db.save()
-    start_date, end_date = management.get_dates()
-    assert (
-        len(start_date) and len(end_date) == 1
-    ), "Both start date and end date should have one entry."
-    assert (
-        start_date[0].strftime("%d/%m/%Y") == "27/04/2022"
-    ), "The start date should be 27/04/2022"
-    assert (
-        end_date[0].strftime("%d/%m/%Y") == "27/04/2022"
-    ), "The end date should be 27/04/2022"
+    dates = management.get_dates()
+    for i in dates.index:
+        start_date = dates.loc[i, "start_date"]
+        end_date = dates.loc[i, "end_date"]
+        assert (
+            start_date.strftime("%d/%m/%Y") == "27/04/2022"
+        ), "The start date should be 27/04/2022"
+        assert (
+            end_date.strftime("%d/%m/%Y") == "27/04/2022"
+        ), "The end date should be 27/04/2022"
     del test_db

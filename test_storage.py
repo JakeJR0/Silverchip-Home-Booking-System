@@ -55,12 +55,13 @@ class TestDatabase:
         ):
             assert (
                 row[0] == 3
-            ), "System User level is not at level 3 instead it is at level {}.".format(
+            ), """System User level is not at level 3 instead
+                it is at level {}.""".format(
                 str(row[0])
             )
             found = True
 
-        assert found == True, "System User was not found within the database."
+        assert found is True, "System User was not found within the database."
 
         # This test checks if the database is able to save
         # changes.
@@ -75,13 +76,19 @@ class TestDatabase:
 
         saved = setup_test_db.save()
 
-        assert saved == True, "Failed to add a new row into the users table."
+        assert saved is True, "Failed to add a new row into the users table."
 
         # This test checks to verify the correct
         # prices have been assigned to the prices.
 
-        for row in setup_test_db.con.execute("SELECT month, price FROM holiday_prices"):
+        for row in setup_test_db.con.execute(
+            """SELECT month,
+                                             price FROM holiday_prices"""
+        ):
             correct_price = month_prices[row[0]]
-            assert row[1] == correct_price, "Incorrect Month Price set in the database."
+            assert (
+                row[1] == correct_price
+            ), """Incorrect Month Price set in
+                                                 the database."""
 
         del setup_test_db

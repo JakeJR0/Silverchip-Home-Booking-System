@@ -74,10 +74,8 @@ class FormattedTimeAndDate:
                 c = str(c)
                 if c.isnumeric():
                     new_item = f"{new_item}{c}"
-
             if new_item == "":
                 new_item = "00"
-
             return new_item
 
         if min == "" or " " or "  ":
@@ -88,18 +86,29 @@ class FormattedTimeAndDate:
 
         if int(hour) > 23:
             print("JJ1")
-            raise FormattedTimeAndDateError("The hour parameter is greater than 23.")
+            raise FormattedTimeAndDateError(
+                """The hour parameter is greater
+                                            than 23."""
+            )
         elif int(hour) < 0:
             print("JJ2")
-            raise FormattedTimeAndDateError("The hour parameter is less than 0.")
+            raise FormattedTimeAndDateError(
+                """The hour parameter is less
+                                             than 0."""
+            )
 
         if int(min) > 60:
             print("JJ4")
-            raise FormattedTimeAndDateError("The Minute cannot be higher than 60.")
+            raise FormattedTimeAndDateError(
+                """The Minute cannot be higher
+                                             than 60."""
+            )
         elif int(min) < 0:
-            raise FormattedTimeAndDateError("The Minute cannot be lower than 0.")
+            raise FormattedTimeAndDateError(
+                """The Minute cannot be lower
+                                             than 0."""
+            )
             return
-
         hour = remove_non_number(hour)
         min = remove_non_number(min)
 
@@ -107,7 +116,6 @@ class FormattedTimeAndDate:
             print("JJ3")
             raise FormattedTimeAndDateError("The Date parameter is empty.")
             return
-
         if int(min) <= 9:
             min = str(f"0{min}")
         else:
@@ -146,7 +154,10 @@ class FormattedUserBookingData:
         if len(name) >= 3 and len(name) <= 20:
             self._first_name = name
         else:
-            raise FormattedUserError("First name must be 3 - 20 characters long.")
+            raise FormattedUserError(
+                """First name must be 3 - 20
+                                     characters long."""
+            )
 
     @property
     def last_name(self):
@@ -157,7 +168,10 @@ class FormattedUserBookingData:
         if len(name) >= 3 and len(name) <= 30:
             self._last_name = name
         else:
-            raise FormattedUserError("Last name must be 3 - 30 Characters long.")
+            raise FormattedUserError(
+                """Last name must be 3 - 30
+                                     Characters long."""
+            )
 
     @property
     def name(self):
@@ -177,12 +191,18 @@ class FormattedUserBookingData:
         if len(first_name) >= 3 and len(first_name) <= 20:
             self._first_name = first_name
         else:
-            raise FormattedUserError("First name must be 3 - 20 characters long.")
+            raise FormattedUserError(
+                """First name must be 3 - 20
+                                     characters long."""
+            )
 
         if len(last_name) >= 3 and len(last_name) <= 30:
             self._last_name = last_name
         else:
-            raise FormattedUserError("Last name must be 3 - 30 Characters long.")
+            raise FormattedUserError(
+                """Last name must be 3 - 30
+                                     Characters long."""
+            )
 
     @property
     def phone_number(self):
@@ -206,7 +226,8 @@ class FormattedUserBookingData:
             self._phone_number = value
         else:
             raise FormattedUserError(
-                "Phone number must be 11 characters but you have {} characters.".format(
+                """Phone number must be 11 characters but you have {}
+                 characters.""".format(
                     str(len(value))
                 )
             )
@@ -241,7 +262,10 @@ class FormattedUserBookingData:
         if value >= 0 and value <= 2:
             self._pets = value
         else:
-            raise FormattedUserError("Please choose a number of pets between 0 and 2.")
+            raise FormattedUserError(
+                """Please choose a number of pets
+                                      between 0 and 2."""
+            )
 
     @property
     def postcode(self):
@@ -306,7 +330,10 @@ class Booking:
 
     def _get_booking_id(self):
         start_id = 100000
-        for row in _database.con.execute("SELECT MAX(ID) + 1 AS new_id FROM bookings"):
+        for row in _database.con.execute(
+            """SELECT MAX(ID) + 1 AS new_id
+                                         FROM bookings"""
+        ):
             print(row)
             if row[0] is not None:
                 start_id = row[0]
@@ -316,6 +343,9 @@ class Booking:
     @property
     def start(self):
         return self._start_date
+
+    def get_instance_dates(self):
+        return [self._start_date, self._end_date]
 
     @start.setter
     def start(self, value=FormattedTimeAndDate):
@@ -344,7 +374,10 @@ class Booking:
         date_range = pd.date_range(start=start, end=end, freq="1d")
         month_prices = pd.DataFrame({"month": [], "price": []})
 
-        for row in _database.con.execute("SELECT month, price FROM holiday_prices"):
+        for row in _database.con.execute(
+            """SELECT month,
+                                         price FROM holiday_prices"""
+        ):
             month_prices.loc[len(month_prices.index)] = [int(row[0]), row[1]]
 
         for date in date_range.date:
@@ -408,8 +441,8 @@ class Booking:
                 """
                                   UPDATE bookings
                                   SET
-                                    first_name=?, 
-                                    last_name=?, 
+                                    first_name=?,
+                                    last_name=?,
                                     mobile_number=?,
                                     email_address=?,
                                     postcode=?,
@@ -470,7 +503,10 @@ class Booking:
     ):
 
         if not self._valid_start_and_end(start_time, end_time):
-            raise IncorrectFormattedDateAndTime("The times provided are not valid.")
+            raise IncorrectFormattedDateAndTime(
+                """The times provided are
+                                                 not valid."""
+            )
             return
 
         self._start_date = start_time
@@ -513,8 +549,10 @@ class Booking:
 
             _database.con.execute(
                 """
-                                INSERT INTO bookings 
-                                (ID, first_name, last_name, mobile_number, email_address, postcode, pets, start_time, end_time)
+                                INSERT INTO bookings
+                                (ID, first_name, last_name, mobile_number,
+                                email_address, postcode, pets, start_time,
+                                end_time)
                                 VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
                                 """,
                 data,
@@ -523,19 +561,21 @@ class Booking:
 
 
 def get_dates():
-    start_date = []
-    end_date = []
+    pandas_df = pd.DataFrame({"start_date": [], "end_date": []})
 
-    for row in _database.con.execute("SELECT start_time, end_time FROM bookings"):
+    for row in _database.con.execute(
+        """SELECT start_time,
+                                        end_time FROM bookings"""
+    ):
         format = "%d/%m/%Y %H:%M"
         if len(row[0]) != len(format):
             format = "%d/%m/%Y"
 
         s_d = datetime.strptime(row[0], format)
         e_d = datetime.strptime(row[0], format)
-        start_date.append(s_d)
-        end_date.append(e_d)
-    return start_date, end_date
+
+        pandas_df.loc[len(pandas_df.index)] = [s_d, e_d]
+    return pandas_df
 
 
 class BookingManagement:
@@ -552,45 +592,63 @@ class BookingManagement:
         available = True
         start_date_string = start_date.date
         end_date_string = end_date.date
+
         if start_date_string > end_date_string:
-            raise BookingError("The booking start date cannot be after the end date.")
+            raise BookingError(
+                """The booking start date cannot be after
+                                the end date."""
+            )
             return
         elif start_date_string == end_date_string:
             raise BookingError(
                 "The booking start date cannot be the same as the end date."
             )
 
-        start_dates, end_dates = get_dates()  # Alex1
-
-        for start_date in start_dates:
-            print(type(end_date))
-            print(type(end_date.date))
-            end_date_plus_day = end_date + timedelta(days=1)
-            end_date_minus_day = end_date - timedelta(days=1)
-            start_date_plus_day = start_date + timedelta(days=1)
-            start_date_minus_day = start_date - timedelta(days=1)
-
-            if end_date_plus_day >= end_date_string >= start_date_minus_day:
-                raise BookingError("You must choose a different end date.")
-
-        for end_date in end_dates:
-            if start_date_minus_day <= start_date_string <= end_date_plus_day:
-                raise BookingError("You must choose a different date.")
-
         booking_range = pd.date_range(
             start=start_date_string, end=end_date_string, freq="1H"
         ).date
 
-        for row in _database.con.execute("SELECT start_time, end_time FROM bookings"):
+        for row in _database.con.execute(
+            """SELECT start_time,
+                                         end_time FROM bookings"""
+        ):
             start = str(row[0])[0:10]
             end = str(row[1])[0:10]
+            start_time = datetime.strptime(start, "%d/%m/%Y") - timedelta(days=2)
+            end_time = datetime.strptime(end, "%d/%m/%Y") + timedelta(days=2)
 
-            db_booking_range = pd.date_range(start=start, end=end, freq="1H").date
+            db_booking_range = pd.date_range(
+                start=start_time,
+                end=end_time,
+                freq="1H",
+            ).date
+
+            for date in db_booking_range:
+                if date in booking_range:
+                    available = False
+                    print("Banned Date.")
+
+        weekend_allowed = False
+        current_time = datetime.now()
+
+        db_booking_range = pd.date_range(
+            start=start_date_string, end=end_date_string, freq="1d"
+        ).date
+
+        print(abs(current_time - start_date_string).days)
+        if abs(current_time - start_date_string).days >= 14:
+            weekend_allowed = True
+            print("Allowed")
+        else:
+            print("Not Allowed")
 
             for date in db_booking_range:
                 if date in booking_range:
                     available = False
 
+                if date.strftime("%A") == "Sunday" or "Saturday":
+                    if not weekend_allowed:
+                        available = False
         return available
 
     @classmethod
@@ -598,7 +656,8 @@ class BookingManagement:
         bookings = []
 
         for row in _database.con.execute(
-            "SELECT ID, first_name, last_name, mobile_number, email_address, postcode, start_time, end_time, pets FROM bookings"
+            """SELECT ID, first_name, last_name, mobile_number, email_address,
+            postcode, start_time, end_time, pets FROM bookings"""
         ):
             user_data = FormattedUserBookingData(
                 first_name=row[1],
@@ -684,12 +743,13 @@ class User:
             "SELECT level FROM users WHERE username=? AND password=?",
             (username, password),
         ):
-            self._permission_level = row[0]
+            self._pl = row[0]
             self._logged_in = True
 
         if not self._logged_in:
             raise FailedToLoginToUser(
-                "Either the username or the password does not match our records."
+                """Either the username or the password does not match
+                 our records."""
             )
 
     @property
@@ -703,11 +763,11 @@ class User:
 
     @property
     def level(self):
-        return self._permission_level
+        return self._pl
 
     @property
     def admin(self):
-        if self._permission_level >= 2:
+        if self._pl >= 2:
             return True
         else:
             return False
@@ -717,7 +777,7 @@ class User:
 
     @property
     def super_admin(self):
-        if self._permission_level >= 3:
+        if self._pl >= 3:
             return True
         else:
             return False
@@ -728,9 +788,9 @@ class User:
 
     @logged_in.setter
     def logged_in(self, value=False):
-        if value == False:
+        if value is False:
             self._logged_in = False
-        elif value == True:
+        elif value is True:
             self._login()
 
     @property
@@ -746,16 +806,17 @@ class User:
     def username(self):
         return self._username
 
-    def __init__(self, username="", password="", permission_level=0, login=False):
+    def __init__(self, username="", password="", pl=0, login=False):
 
         self._username = username
         self._password_reset = False
 
-        self._permission_level = permission_level
+        self._pl = pl
 
-        if permission_level is None and login == False:
+        if pl is None and login is False:
             raise FailedToMakeUserInstance(
-                "A Permission level is required if the user is not being logged in."
+                """A Permission level is required if the user is not being
+                logged in."""
             )
 
         self._password = password
@@ -771,12 +832,14 @@ class UserManager:
     def change_password(self, password="", acting_user=User, user=User):
         if password >= 255:
             raise PasswordValidationError(
-                "Password is too large, please choose a password under 255 characters."
+                """Password is too large, please choose a password under
+                 255 characters."""
             )
             return False
         elif password <= 7:
             raise PasswordValidationError(
-                "Password is too short, please choose a longer password. (8 + Characters)"
+                """Password is too short, please choose a longer password.
+                 (8 + Characters)"""
             )
             return False
 
@@ -806,10 +869,16 @@ class UserManager:
             )
             return False
         elif not number_included:
-            raise PasswordValidationError("Password does not include a number.")
+            raise PasswordValidationError(
+                """Password does not include a
+             number."""
+            )
             return False
         elif not character_included:
-            raise PasswordValidationError("Password does not include a letter.")
+            raise PasswordValidationError(
+                """Password does not include a
+             letter."""
+            )
             return False
 
         if acting_user.logged_in:
@@ -825,7 +894,10 @@ class UserManager:
 
                 _database.save()
             else:
-                raise PermissionDenied("You are not authorised to modify this account.")
+                raise PermissionDenied(
+                    """You are not authorised to modify
+                 this account."""
+                )
         else:
             raise PermissionDenied(
                 "You must be logged in, to change the user's account password."
@@ -853,7 +925,10 @@ class UserManager:
                 except Exception as e:
                     return e
             else:
-                raise PermissionDenied("You are not authorised to modify this account.")
+                raise PermissionDenied(
+                    """You are not authorised to modify
+                 this account."""
+                )
         else:
             raise PermissionDenied("Admin account is not logged in.")
 
@@ -906,11 +981,13 @@ class UserManager:
 
         if user.level > 2:
             raise InvalidAccountLevel(
-                "Level provided is too high as it does not meet the current level systems standards."
+                """Level provided is too high as it does not meet the
+                 current level systems standards."""
             )
         elif user.level < 1:
             raise InvalidAccountLevel(
-                f"The Level provided is too low as the minimum level is {guest_level}"
+                f"""The Level provided is too low as the minimum
+                 level is {guest_level}"""
             )
 
         if admin_user.super_admin and admin_user.level > user.level:
@@ -925,7 +1002,8 @@ class UserManager:
             return True
         else:
             raise PermissionDeniedToCreateAccount(
-                f"User is required to be a Super Admin but the user provided is only a {admin_user.level_text}"
+                f"""User is required to be a Super Admin but the user
+                 provided is only a {admin_user.level_text}"""
             )
             return
 
@@ -953,7 +1031,10 @@ def setup(database=None, test=False):
     else:
         try:
             if not database.con:
-                raise ManagementSetupFailure("Failed to find database connection.")
+                raise ManagementSetupFailure(
+                    """Failed to find database
+                 connection."""
+                )
         except ManagementSetupFailure as error:
             raise ManagementSetupFailure(error)
         except:

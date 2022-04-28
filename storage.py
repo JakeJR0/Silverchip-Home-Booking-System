@@ -54,6 +54,7 @@ class Database:
     def con(self):
         return self._con
 
+    # Save function, data validation for system errors
     def save(self):
         try:
             self._con.commit()
@@ -144,6 +145,7 @@ class Database:
 
             con.commit()
 
+        # Database error handling
         except Exception as e:
             if self._remove_on_setup_failure:
                 file = f"{self._db_name}.{_database_file_extension}"
@@ -211,6 +213,7 @@ class Database:
         self._db_name = db_name
         self._delete_on_close = delete_on_close
 
+        # Run setup if 'not setup'
         if not setup:
             self._setup()
 

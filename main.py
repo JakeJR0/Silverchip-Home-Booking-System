@@ -207,6 +207,7 @@ class Application:
         start_date = self._start_date_entry.get_date()
         start_date_hour = self
         end_date = self._end_date_entry.get_date()
+        management.BookingManagement.booking_available
         if start_date >= end_date:
             box.showerror(
                 "Booking Error",
@@ -600,10 +601,9 @@ class Application:
         if booking_available:
             self._booking_availability.config(text="Booking available", fg="green")
         if not booking_available:
-            self._booking_availability.config(text="Booking unavailable", fg="red")
-        else:
-            self._booking_availability.config(
-                text="Checking availability...", fg="yellow"
+            # self._booking_availability.config(text="Booking unavailable", fg="red")
+            box.showwarning(
+                "Booking", "The booking requested is currently unavailable."
             )
 
         self._booking_availability.after(3000, self._hide_booking_status_message)
@@ -1500,7 +1500,7 @@ class Application:
             font=fnt.Font(size=25),
             anchor="w",
         )
-        return_menu.grid(column=0, row=6, padx=5, pady=3)
+        return_menu.grid(column=0, row=6, padx=(25, 0), pady=3)
         self._admin_page = admin_page
 
         # Manage accounts
