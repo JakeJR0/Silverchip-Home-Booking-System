@@ -1,6 +1,7 @@
 # Management system for the booking system
 # Import modules
 from datetime import datetime, timedelta
+from dateutil.relativedelta import relativedelta
 import pandas as pd
 
 _database = None
@@ -372,23 +373,22 @@ class Booking:
         start = self._start_date.date.strftime(date_format)
         end = self._end_date.date.strftime(date_format)
         date_range = pd.date_range(start=start, end=end, freq="1d")
-        month_prices = pd.DataFrame({"month": [], "price": []})
+
+        month_prices = {}
 
         for row in _database.con.execute(
             """SELECT month,
                                          price FROM holiday_prices"""
         ):
-            month_prices.loc[len(month_prices.index)] = [int(row[0]), row[1]]
-
+            month_prices[row[0]] = row[1]
+        print(month_prices)
         for date in date_range.date:
             date = us_date_to_uk(str(date))
-            month = str(int(date[3:5]))
+            month = int(date[3:5])
             print("Month", month)
-            price = 0
-            for i in month_prices.index:
-                if int(month) == int(month_prices.loc[i, "month"]):
-                    price = month_prices.loc[i, "price"]
-                    total_cost += price
+            price = month_prices[month]
+            print(month, price)
+            total_cost += price
 
         pet_cost = float(int(self._user_data.pets) * 25)
         total_cost += pet_cost
@@ -515,10 +515,13 @@ class Booking:
         self._booking_id = booking_id
 
         if create:
+
             start = self._start_date.date.strftime("%d/%m/%Y")
             end = self._end_date.date.strftime("%d/%m/%Y")
             start = "{} {}:{}".format(start, start_time.hour, start_time.minute)
             end = "{} {}:{}".format(end, end_time.hour, end_time.minute)
+
+            name = self.user.name
             bid = 0
             if booking_id != 0:
                 bid = booking_id
@@ -733,6 +736,23 @@ class User:
     the system.
     """
 
+    @classmethod
+    def get_user_from_username(self, username=""):
+        if self.username == "":
+            return
+        elif self.username is None:
+            return
+
+        sql_select = """
+                            SELECT username, level
+                            FROM users
+                            WHERE username=?
+                            """
+
+        for row in _database.con.execute(sql_select, username):
+            user = User(row[0], pl=row[1])
+            return user
+
     def _login(self):
         # This is used to create
         # a user object by checking the username
@@ -830,13 +850,13 @@ class User:
 class UserManager:
     @classmethod
     def change_password(self, password="", acting_user=User, user=User):
-        if password >= 255:
+        if len(password) >= 255:
             raise PasswordValidationError(
                 """Password is too large, please choose a password under
                  255 characters."""
             )
             return False
-        elif password <= 7:
+        elif len(password) <= 8:
             raise PasswordValidationError(
                 """Password is too short, please choose a longer password.
                  (8 + Characters)"""
@@ -851,12 +871,12 @@ class UserManager:
         for character in password:
             if character.isalpha():
                 character_included = True
+                if character.islower():
+                    lower_letter_included = True
+                elif character.isupper():
+                    upper_letter_included = True
             elif character.isnumeric():
                 number_included = True
-            elif character.islower():
-                lower_letter_included = True
-            elif character.isupper():
-                upper_letter_included = True
 
         if not upper_letter_included:
             raise PasswordValidationError(
@@ -882,14 +902,15 @@ class UserManager:
             return False
 
         if acting_user.logged_in:
-            if acting_user == user or acting_user.level > user:
+            if acting_user == user.level or acting_user.level > user:
+                username = user.username
                 _database.con.execute(
                     """
                               UPDATE users
-                              SET password='?'
+                              SET password=?
                               WHERE username=?
                               """,
-                    (password, user.username),
+                    (password, username),
                 )
 
                 _database.save()
