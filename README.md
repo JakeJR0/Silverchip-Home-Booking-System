@@ -7,6 +7,7 @@
 - [About](#about)
 - [Project Brief](#project-brief)
 - [Authors](#authors)
+- [The Booking System](#the-booking-system)
 
 
 ## About
@@ -57,6 +58,42 @@ date where we allow smaller breaks.<br>
 2) Ability to edit bookings<br>
 3) Ability to cancel bookings<br>
 
+
+## The booking system
+Bookings can be made up to 18 months in advance and no further. There are no restrictions on booking on dates in the past as if the user
+wanted to store past bookings that were made prior to the system being available, then storing bookings in the past allows for there
+to be a digital archive.
+
+Bookings over the weekend can't be made if the booking start date is within 2 weeks of booking, as requested by the brief.
+
+
+## Viewing Bookings
+The view bookings system is accessible to both the admin and guest user accounts. All the details of the booking, including the price 
+are displayed in this section. The information is displayed in 'Label' and can not be edited.
+
+
+## Manage Bookings
+The same idea as the view booking system however with the one major difference of each detail except the price, which is automatically
+updated by the system when a change is made, can be altered by the user. The same data validation as the make a booking system applies 
+to the changes made to the bookings.
+
+
+## Manage Accounts
+Accounts split into two lists, the 'Admin Accounts' list and the 'Guest Accounts' list. The admin with access to this page can: create 
+new accounts, delete existing ones and create new passwords for existings accounts.
+
+
+## Account types
+There are 2 account types: Guest and Admin. Admins have access to the Admin Panel, which allows the user to manage bookings and accounts.
+Guests can only view and create new bookings. The admin has the same permissions as the guest and can access the same thing however with 
+the extra access mentioned above.
+
+
+## Permanent Admin Account
+Hard-coded into the code, an admin account exists even when deleted in the account page and whenthe database is deleted.
+Username: System
+Password: root
+This account exists to ensure the program can't lock every user out and it remains functional.
 
 ## Authors
 - [JakeJR0](https://github.com/JakeJR0)
