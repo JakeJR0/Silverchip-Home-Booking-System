@@ -58,6 +58,14 @@ date where we allow smaller breaks.<br>
 3) Ability to cancel bookings<br>
 
 
+## The booking system
+Bookings can be made up to 18 months in advance and no further. There are no restrictions on booking on dates in the past as if the user
+wanted to store past bookings that were made prior to the system being available, then storing bookings in the past allows for there
+to be a digital archive.
+
+Bookings over the weekend can't be made if the booking start date is within 2 weeks of booking, as requested by the brief.
+
+
 ## Authors
 - [JakeJR0](https://github.com/JakeJR0)
 - [MitchStreet](https://github.com/MitchStreet)
