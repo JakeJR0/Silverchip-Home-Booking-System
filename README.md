@@ -7,6 +7,7 @@
 - [About](#about)
 - [Project Brief](#project-brief)
 - [Authors](#authors)
+- - [The Booking System](#the-booking-system)
 
 
 ## About
