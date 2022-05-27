@@ -103,10 +103,7 @@ six==1.16.0
 sounddevice==0.4.2
 SQLAlchemy==1.4.23
 sqlparse==0.4.2
-tensorboard>=2.8
-tensorboard-plugin-wit==1.8.0
 tensorflow-cpu==2.8.1
-tensorflow-estimator==2.2.0
 termcolor==1.1.0
 tkcalendar==1.6.1
 toml==0.10.2
