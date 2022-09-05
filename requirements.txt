@@ -40,7 +40,6 @@ html5lib==1.1
 idna==3.2
 importlib-metadata==3.10.1
 iniconfig==1.1.1
-itimg==0.1
 itsdangerous==2.0.1
 jedi==0.15.2
 jeepney==0.7.1
@@ -109,7 +108,7 @@ tomli==2.0.1
 tomlkit==0.7.2
 tqdm==4.62.2
 typing-extensions==3.7.4.3
-ujson==5.2.0
+ujson==5.4.0
 urllib3==1.26.6
 virtualenv==20.7.2
 webencodings==0.5.1
