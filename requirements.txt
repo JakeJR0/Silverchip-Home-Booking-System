@@ -40,7 +40,6 @@ html5lib==1.1
 idna==3.2
 importlib-metadata==3.10.1
 iniconfig==1.1.1
-itimg==0.1
 itsdangerous==2.0.1
 jedi==0.15.2
 jeepney==0.7.1
