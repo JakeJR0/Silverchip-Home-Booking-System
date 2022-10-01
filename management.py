@@ -1,53 +1,67 @@
-# Management system for the booking system
+"""
+    Management system for the booking system
+"""
+
 # Import modules
 from datetime import datetime, timedelta
-from dateutil.relativedelta import relativedelta
 import pandas as pd
 
-_database = None
+from management_exceptions import IncorrectFormattedDateAndTime, FormattedTimeAndDateError
+from management_exceptions import FormattedUserError, BookingError, FailedToLoginToUser
+from management_exceptions import PermissionDeniedToCreateAccount, PermissionDenied
+from management_exceptions import InvalidAccountLevel, FailedToMakeUserInstance
+from management_exceptions import PasswordValidationError, ManagementSetupFailure
 
-
-class IncorrectFormattedDateAndTime(ValueError):
-    pass
-
+_DATABASE = None
 
 # Coversion of date from US format to UK format
 def us_date_to_uk(date=""):
+    """
+        This is used to convert a date from US format to UK format.
+    """
     date.replace("-", "/")
-    date = "{}/{}/{}".format(date[8:10], date[5:7], date[0:4])
+    date = f"{date[8:10]}/{date[5:7]}/{date[0:4]}"
     return date
-
-
-class FormattedTimeAndDateError(ValueError):
-    pass
-
-
 class FormattedTimeAndDate:
+    """
+        This is used to ensure that the date and time is formatted correctly.
+    """
     @property
     def date(self):
+        """
+            This is used to get the date.
+        """
         return self._datetime
 
     @date.setter
     def date(self, value):
+        """
+            This is used to set the date.
+        """
         if "-" in value:
             raise FormattedTimeAndDateError("Please provide a valid date.")
-            return
 
         try:
             date_time = datetime.strptime(
-                "{} {}:{}".format(value, self.hour, self.minute), "%d/%m/%Y %H:%M"
+                f"{value} {self.hour}:{self.minute}", "%d/%m/%Y %H:%M"
             )
             self._datetime = date_time
-        except:
-            raise FormattedTimeAndDateError("Please provide a valid date.")
-            return
+        except ValueError as error:
+            raise FormattedTimeAndDateError("Please provide a valid date. \
+            Error: {error}") from error
 
     @property
     def hour(self):
+        """
+            This is used to get the hour.
+        """
         return int(self._hour)
 
     @hour.setter
     def hour(self, value=0):
+        """
+            This is used to set the hour.
+        """
         if value >= 0 and value <= 23:
             self._hour = value
         else:
@@ -55,34 +69,43 @@ class FormattedTimeAndDate:
 
     @property
     def minute(self):
+        """
+            This is used to get the minute.
+        """
         return int(self._min)
 
     @minute.setter
     def minute(self, value=0):
+        """
+            This is used to set the minute.
+        """
         if value >= 0 and value <= 60:
             self._min = value
         else:
             raise FormattedTimeAndDateError("Please provide a valid date.")
 
-    def __del__(self):
-        pass
-
-    def __init__(self, date="", hour=0, min=0):
+    def __init__(self, date="", hour=0, minutes=0):
+        """
+            This is used to initialise the class.
+        """
         def remove_non_number(item=""):
-            item = str(item)
+            """
+                This is used to remove non number characters from a string.
+            """
+            items = str(item)
             new_item = ""
-            for c in item:
-                c = str(c)
-                if c.isnumeric():
-                    new_item = f"{new_item}{c}"
+            for item in items:
+                item = str(item)
+                if item.isnumeric():
+                    new_item = f"{new_item}{item}"
             if new_item == "":
                 new_item = "00"
             return new_item
 
-        if min == "" or " " or "  ":
-            min = str(0)
+        if minutes == "":
+            minutes = str(0)
 
-        if hour == "" or " " or "  ":
+        if hour == "":
             hour = str(0)
 
         if int(hour) > 23:
@@ -98,49 +121,41 @@ class FormattedTimeAndDate:
                                              than 0."""
             )
 
-        if int(min) > 60:
+        if int(minutes) > 60:
             print("JJ4")
             raise FormattedTimeAndDateError(
                 """The Minute cannot be higher
                                              than 60."""
             )
-        elif int(min) < 0:
+        elif int(minutes) < 0:
             raise FormattedTimeAndDateError(
                 """The Minute cannot be lower
                                              than 0."""
             )
-            return
         hour = remove_non_number(hour)
-        min = remove_non_number(min)
+        minutes = remove_non_number(minutes)
 
         if date == "":
             print("JJ3")
             raise FormattedTimeAndDateError("The Date parameter is empty.")
-            return
-        if int(min) <= 9:
-            min = str(f"0{min}")
+        if int(minutes) <= 9:
+            minutes = str(f"0{minutes}")
         else:
-            min = str(min)
+            minutes = str(minutes)
 
         if int(hour) <= 9:
             hour = str(f"0{hour}")
         else:
             hour = str(hour)
 
-        combined_string = "{} {}:{}".format(date, hour, min)
+        combined_string = f"{date} {hour}:{minutes}"
         try:
             self._datetime = datetime.strptime(combined_string, "%d/%m/%Y %H:%M")
-        except ValueError as r:
-            raise IncorrectFormattedDateAndTime(r)
+        except ValueError as error:
+            raise IncorrectFormattedDateAndTime(error) from error
 
         self._hour = hour
-        self._min = min
-
-
-class FormattedUserError(ValueError):
-    pass
-
-
+        self._min = minutes
 class FormattedUserBookingData:
     """
     Used to store booking information about a user.
@@ -148,10 +163,16 @@ class FormattedUserBookingData:
 
     @property
     def first_name(self):
+        """
+            This is used to get the first name.
+        """
         return self._first_name
 
     @first_name.setter
     def first_name(self, name=""):
+        """
+            This is used to set the first name.
+        """
         if len(name) >= 3 and len(name) <= 20:
             self._first_name = name
         else:
@@ -162,32 +183,42 @@ class FormattedUserBookingData:
 
     @property
     def last_name(self):
+        """
+            This is used to get the last name.
+        """
         return self._last_name
 
     @last_name.setter
     def last_name(self, name=""):
+        """
+            This is used to set the last name.
+        """
         if len(name) >= 3 and len(name) <= 30:
             self._last_name = name
         else:
             raise FormattedUserError(
                 """Last name must be 3 - 30
-                                     Characters long."""
-            )
+                                     Characters long.""")
 
     @property
     def name(self):
+        """
+            This is used to get the name.
+        """
         return f"{self._first_name} {self._last_name}"
 
     @name.setter
     def name(self, name=""):
+        """
+            This is used to set the name.
+        """
         first_name, last_name = "", ""
         try:
             first_name, last_name = name.split(" ", 2)
-        except:
+        except ValueError as error:
             raise FormattedUserError(
-                "Both a first name and a last name must be provided."
-            )
-            return
+                f"Both a first name and a last name must be provided. Error: {error}"
+            ) from error
 
         if len(first_name) >= 3 and len(first_name) <= 20:
             self._first_name = first_name
@@ -207,94 +238,103 @@ class FormattedUserBookingData:
 
     @property
     def phone_number(self):
+        """
+            This is used to get the phone number.
+        """
         return self._phone_number
 
     @phone_number.setter
     def phone_number(self, value=""):
+        """
+            This is used to set the phone number.
+        """
         if len(value) == 11:
-            bad_char_found = False
             for i in value:
                 if not i.isnumeric():
                     raise FormattedUserError(
                         "The phone number should only include numbers."
                     )
-                    bad_char_found = True
-                    break
-
-            if bad_char_found:
-                return
 
             self._phone_number = value
         else:
             raise FormattedUserError(
-                """Phone number must be 11 characters but you have {}
-                 characters.""".format(
-                    str(len(value))
-                )
-            )
+                f"Phone number must be 11 characters but you have {str(len(value))} characters.")
 
     @property
     def email(self):
+        """
+            This is used to get the email.
+        """
         return self._email
 
     @email.setter
     def email(self, email=""):
+        """
+            This is used to set the email.
+        """
         dot_count = 0
         at_count = 0
 
-        for c in email:
-            if c == ".":
+        for email_part in email:
+            if email_part == ".":
                 dot_count += 1
-            elif c == "@":
+            elif email_part == "@":
                 at_count += 1
 
         if dot_count > 3 or at_count > 1 or len(email) > 50 or len(email) < 6:
             raise FormattedUserError("Please provide a valid email address.")
-            return
-
         self._email = email
 
     @property
     def pets(self):
+        """
+            This is used to get the pets.
+        """
         return self._pets
 
     @pets.setter
     def pets(self, value=0):
+        """
+            This is used to set the pets.
+        """
         if value >= 0 and value <= 2:
             self._pets = value
         else:
             raise FormattedUserError(
-                """Please choose a number of pets
-                                      between 0 and 2."""
-            )
+                "Please choose a number of pets\
+                between 0 and 2.")
 
     @property
     def postcode(self):
+        """
+            This is used to get the postcode.
+        """
         return self._postcode
 
     @postcode.setter
     def postcode(self, code=""):
-        index = 0
+        """
+            This is used to set the postcode.
+        """
 
         def raise_post_error():
             raise FormattedUserError("Please provide a valid postcode.")
 
         if len(code) >= 5 and len(code) <= 7:
             self._postcode = code
-            return
         else:
             raise_post_error()
 
     def __str__(self):
+        """
+            This is used to return the string representation of the class.
+        """
         output_string = (
-            "Name: {}\nEmail: {}\nPostcode: {}\nNumber: {}\nPets: {}".format(
-                self.name, self._email, self._postcode, self._phone_number, self._pets
-            )
+            "Name: {self.name}\nEmail: {self._email}\n\
+            Postcode: {self._postcode}\nNumber: {self._phone_number}\n\
+            Pets: {self._pets}"
         )
         return output_string
-
-    def __del__(self):
-        pass
 
     def __init__(
         self,
@@ -305,21 +345,15 @@ class FormattedUserBookingData:
         phone_number="",
         pets=0,
     ):
+        """
+            This is used to initialise the class.
+        """
+
         self._first_name, self._last_name = first_name, last_name
         self._postcode = postcode
         self._email = email
         self._phone_number = phone_number
         self._pets = pets
-
-
-class BookingError(ValueError):
-    pass
-
-
-class BookingSaveError(SystemError):
-    pass
-
-
 class Booking:
     """
     Used to both view and create
@@ -330,9 +364,12 @@ class Booking:
     """
 
     def _get_booking_id(self):
+        """
+            This is used to get the booking id.
+        """
         start_id = 100000
         rows = None
-        with _database as cur:
+        with _DATABASE as cur:
             rows = cur.execute('''
                 SELECT MAX(ID) + 1 AS new_id
                 FROM Bookings
@@ -347,31 +384,52 @@ class Booking:
 
     @property
     def start(self):
+        """
+            This is used to get the start date.
+        """
         return self._start_date
 
     def get_instance_dates(self):
+        """
+            This is used to get the instance dates.
+        """
         return [self._start_date, self._end_date]
 
     @start.setter
     def start(self, value=FormattedTimeAndDate):
+        """
+            This is used to set the start date.
+        """
         if self._valid_start_and_end(value, self._end_date):
             self._start_date = value
 
     @property
     def end(self):
+        """
+            This is used to get the end date.
+        """
         return self._end_date
 
     @end.setter
     def end(self, value=FormattedTimeAndDate):
+        """
+            This is used to set the end date.
+        """
         if self._valid_start_and_end(self._start_date, value):
             self._end_date = value
 
     @property
     def user(self):
+        """
+            This is used to get the user.
+        """
         return self._user_data
 
     @property
     def cost(self):
+        """
+            This is used to get the cost.
+        """
         total_cost = 0
         date_format = "%d/%m/%Y"
         start = self._start_date.date.strftime(date_format)
@@ -380,7 +438,7 @@ class Booking:
 
         month_prices = {}
         rows = None
-        with _database as cur:
+        with _DATABASE as cur:
             rows = cur.execute('''
                 SELECT month, price
                 FROM holiday_prices
@@ -405,15 +463,20 @@ class Booking:
     def _valid_start_and_end(
         self, start=FormattedTimeAndDate, end=FormattedTimeAndDate
     ):
+        print("Start", start)
+        print("End", end)
         return True
 
     def _remove_item(self, item=None):
         try:
             del item
-        except:
+        except AttributeError:
             pass
 
     def save(self):
+        """
+            This is used to save the booking.
+        """
         bid = self._booking_id
         first_name = str(self._user_data.first_name)
         last_name = str(self._user_data.last_name)
@@ -425,8 +488,8 @@ class Booking:
         end = self.end.date
         start = str(start).replace("-", "/")
         end = str(end).replace("-", "/")
-        start = "{} {}:{}".format(start, self.start.hour, self.start.minute)
-        end = "{} {}:{}".format(end, self.end.hour, self.end.minute)
+        start = f"{start} {self.start.hour}:{self.start.minute}"
+        end = f"{end} {self.end.hour}:{self.end.minute}"
         start = us_date_to_uk(start)
         end = us_date_to_uk(end)
 
@@ -443,7 +506,7 @@ class Booking:
                 bid,
             )
             print(bid, data)
-            with _database as cur:
+            with _DATABASE as cur:
                 cur.execute('''
                     UPDATE bookings
                     SET
@@ -463,30 +526,38 @@ class Booking:
             raise BookingSaveError(error) from error
 
     def delete(self):
+        """
+            This is used to delete the booking.
+        """
         if self._booking_id is None:
             print("Booking ID is none.")
             return False
 
         try:
-            with _database as cur:
+            with _DATABASE as cur:
                 cur.execute('''
                     DELETE FROM bookings
                     WHERE ID=?
                 ''', (self._booking_id,))
             return True
         except Exception as error:
-            print(error)
-            return False
+            raise BookingSaveError(error) from error
 
     def __str__(self):
+        """
+            This is used to get the string representation of the class.
+        """
         format_date = "%d/%m/%Y"
         start_date = self._start_date.date.strftime(format_date)
         end_date = self._end_date.date.strftime(format_date)
         name = self.user.name
-        booking_data = "{} - {}: {}".format(start_date, end_date, name)
+        booking_data = f"{start_date} - {end_date}: {name}"
         return booking_data
 
     def __del__(self):
+        """
+            This is used to delete the class.
+        """
         items = [self._start_date, self._end_date, self._user_data]
         for i in items:
             self._remove_item(i)
@@ -499,13 +570,13 @@ class Booking:
         create=False,
         booking_id=0,
     ):
-
+        """
+            This is used to initialise the class.
+        """
         if not self._valid_start_and_end(start_time, end_time):
             raise IncorrectFormattedDateAndTime(
-                """The times provided are
-                                                 not valid."""
+                """The times provided are not valid."""
             )
-            return
 
         self._start_date = start_time
         self._end_date = end_time
@@ -513,13 +584,11 @@ class Booking:
         self._booking_id = booking_id
 
         if create:
-
             start = self._start_date.date.strftime("%d/%m/%Y")
             end = self._end_date.date.strftime("%d/%m/%Y")
-            start = "{} {}:{}".format(start, start_time.hour, start_time.minute)
-            end = "{} {}:{}".format(end, end_time.hour, end_time.minute)
+            start = f"{start} {start_time.hour}:{start_time.minute}"
+            end = f"{end} {end_time.hour}:{end_time.minute}"
 
-            name = self.user.name
             bid = 0
             if booking_id != 0:
                 bid = booking_id
@@ -547,7 +616,7 @@ class Booking:
                 start,
                 end,
             )
-            with _database as cur:
+            with _DATABASE as cur:
                 cur.execute('''
                     INSERT INTO bookings
                         (ID, first_name, last_name, mobile_number,
@@ -558,35 +627,47 @@ class Booking:
 
 
 def get_dates():
+    """
+        This is used to get the dates from the database.
+    """
     pandas_df = pd.DataFrame({"start_date": [], "end_date": []})
-    with _database as cur:
+    with _DATABASE as cur:
         for row in cur.execute(
         """SELECT start_time, end_time
         FROM bookings"""
         ):
 
-            format = "%d/%m/%Y %H:%M"
-            if len(row[0]) != len(format):
-                format = "%d/%m/%Y"
+            date_format = "%d/%m/%Y %H:%M"
+            if len(row[0]) != len(date_format):
+                date_format = "%d/%m/%Y"
 
-            s_d = datetime.strptime(row[0], format)
-            e_d = datetime.strptime(row[0], format)
+            s_d = datetime.strptime(row[0], date_format)
+            e_d = datetime.strptime(row[0], date_format)
             pandas_df.loc[len(pandas_df.index)] = [s_d, e_d]
     return pandas_df
 
 
 class BookingManagement:
+    """
+        This is used to manage the bookings.
+    """
     @classmethod
-    def booking_count(self):
-        with _database as cur:
+    def booking_count(cls):
+        """
+            This is used to get the number of bookings.
+        """
+        with _DATABASE as cur:
             for count_db in cur.execute("SELECT COUNT(*) FROM bookings"):
                 return count_db[0] or 0
         return 0
 
     @classmethod
     def booking_available(
-        self, start_date=FormattedTimeAndDate, end_date=FormattedTimeAndDate
+        cls, start_date=FormattedTimeAndDate, end_date=FormattedTimeAndDate
     ):
+        """
+            This is used to check if the booking is available.
+        """
         available = True
         start_date_string = start_date.date
         end_date_string = end_date.date
@@ -596,7 +677,6 @@ class BookingManagement:
                 """The booking start date cannot be after
                                 the end date."""
             )
-            return
         elif start_date_string == end_date_string:
             raise BookingError(
                 "The booking start date cannot be the same as the end date."
@@ -606,7 +686,7 @@ class BookingManagement:
             start=start_date_string, end=end_date_string, freq="1H"
         ).date
         booking_rows = None
-        with _database as cur:
+        with _DATABASE as cur:
             booking_rows = cur.execute(
                 """SELECT start_time, end_time
                 FROM bookings"""
@@ -652,10 +732,13 @@ class BookingManagement:
         return available
 
     @classmethod
-    def get_bookings(self):
+    def get_bookings(cls):
+        """
+            This is used to get the bookings from the database.
+        """
         bookings = []
         booking_rows = None
-        with _database as cur:
+        with _DATABASE as cur:
             booking_rows = cur.execute(
                 """SELECT ID, first_name, last_name, mobile_number, email_address,
             postcode, start_time, end_time, pets FROM bookings""")
@@ -698,36 +781,6 @@ class BookingManagement:
 
     def __init__(self):
         self.__del__()
-
-
-class FailedToLoginToUser(ValueError):
-    pass
-
-
-class PermissionDeniedToCreateAccount(ValueError):
-    pass
-
-
-class PermissionDenied(SystemError):
-    pass
-
-
-class InvalidAccountLevel(ValueError):
-    pass
-
-
-class FailedToCreateFor(SystemError):
-    pass
-
-
-class FailedToMakeUserInstance(ValueError):
-    pass
-
-
-class PasswordValidationError(ValueError):
-    pass
-
-
 class User:
     """
     This is used to manage users within
@@ -735,10 +788,11 @@ class User:
     """
 
     @classmethod
-    def get_user_from_username(self, username=""):
-        if self.username == "":
-            return
-        elif self.username is None:
+    def get_user_from_username(cls, username=""):
+        """
+            This is used to get a user from the database by their username.
+        """
+        if username == "":
             return
 
         sql_select = """
@@ -746,18 +800,22 @@ class User:
                             FROM users
                             WHERE username=?
                             """
-        with _database as cur:
+        with _DATABASE as cur:
             for row in cur.execute(sql_select, username):
-                user = User(row[0], pl=row[1])
+                user = User(row[0], permission_level=row[1])
                 return user
 
     def _login(self):
-        # This is used to create
-        # a user object by checking the username
-        # and password with the one within the database.
+        """
+            This is used to login the user.
+
+            This is used to create
+            a user object by checking the username
+            and password with the one within the database.
+        """
         username, password = self._username, self._password
         sql_selected_users = None
-        with _database as cur:
+        with _DATABASE as cur:
             sql_selected_users = cur.execute(
                 "SELECT level FROM users WHERE username=? AND password=?",
                 (username, password)
@@ -775,6 +833,9 @@ class User:
 
     @property
     def level_text(self):
+        """
+            This is used to get the level in text form.
+        """
         if self.super_admin:
             return "Super Admin"
         elif self.admin:
@@ -784,31 +845,41 @@ class User:
 
     @property
     def level(self):
+        """
+            This is used to get the level of the user.
+        """
         return self._pl
 
     @property
     def admin(self):
+        """
+            This is used to check if the user is an admin.
+        """
         if self._pl >= 2:
             return True
-        else:
-            return False
-
-    def __del__(self):
-        pass
+        return False
 
     @property
     def super_admin(self):
+        """
+            This is used to check if the user is a super admin.
+        """
         if self._pl >= 3:
             return True
-        else:
-            return False
+        return False
 
     @property
     def logged_in(self):
+        """
+            This is used to check if the user is logged in.
+        """
         return self._logged_in
 
     @logged_in.setter
     def logged_in(self, value=False):
+        """
+            This is used to set the logged in status of the user.
+        """
         if value is False:
             self._logged_in = False
         elif value is True:
@@ -816,25 +887,36 @@ class User:
 
     @property
     def change_password_required(self):
+        """
+            This is used to check if the user needs to change their password.
+        """
         return self._password_reset
 
     @change_password_required.setter
     def change_password_required(self, password=""):
+        """
+            This is used to set the password reset status of the user.
+        """
         self._password = password
         self._login()
 
     @property
     def username(self):
+        """
+            This is used to get the username of the user.
+        """
         return self._username
 
-    def __init__(self, username="", password="", pl=0, login=False):
-
+    def __init__(self, username="", password="", permission_level=0, login=False):
+        """
+            This is used to initialise the class.
+        """
         self._username = username
         self._password_reset = False
 
-        self._pl = pl
+        self._pl = permission_level
 
-        if pl is None and login is False:
+        if permission_level is None and login is False:
             raise FailedToMakeUserInstance(
                 """A Permission level is required if the user is not being
                 logged in."""
@@ -847,22 +929,26 @@ class User:
         if login:
             self._login()
 
-
 class UserManager:
+    """
+        This is used to manage users within the system.
+    """
     @classmethod
-    def change_password(self, password="", acting_user=User, user=User):
+    def change_password(cls, password="", acting_user=User, user=User):
+        """
+            This is used to change the password of a user.
+        """
         if len(password) >= 255:
             raise PasswordValidationError(
                 """Password is too large, please choose a password under
                  255 characters."""
             )
-            return False
-        elif len(password) <= 8:
+
+        if len(password) <= 8:
             raise PasswordValidationError(
                 """Password is too short, please choose a longer password.
                  (8 + Characters)"""
             )
-            return False
 
         upper_letter_included = False
         lower_letter_included = False
@@ -883,29 +969,25 @@ class UserManager:
             raise PasswordValidationError(
                 "Password does not include an uppercase letter."
             )
-            return False
         elif not lower_letter_included:
             raise PasswordValidationError(
                 "Password does not include a lowercase letter."
             )
-            return False
         elif not number_included:
             raise PasswordValidationError(
                 """Password does not include a
              number."""
             )
-            return False
         elif not character_included:
             raise PasswordValidationError(
                 """Password does not include a
              letter."""
             )
-            return False
 
         if acting_user.logged_in:
             if acting_user == user.level or acting_user.level > user:
                 username = user.username
-                with _database as cur:
+                with _DATABASE as cur:
                     cur.execute('''
                         UPDATE users
                         SET password=?
@@ -922,7 +1004,10 @@ class UserManager:
             )
 
     @classmethod
-    def remove_user(self, admin_user=User, user_to_remove=User):
+    def remove_user(cls, admin_user=User, user_to_remove=User):
+        """
+            This is used to remove a user from the system.
+        """
         if admin_user.logged_in:
             if (
                 admin_user.level > user_to_remove.level
@@ -930,14 +1015,14 @@ class UserManager:
             ):
                 try:
                     username = user_to_remove.username
-                    with _database as cur:
+                    with _DATABASE as cur:
                         cur.execute('''
                         DELETE FROM users
                         WHERE username=?
                         ''', (username,))
                     del user_to_remove
                     return True
-                except Exception as error:
+                except AttributeError as error:
                     return error
             else:
                 raise PermissionDenied(
@@ -948,8 +1033,11 @@ class UserManager:
             raise PermissionDenied("Admin account is not logged in.")
 
     @classmethod
-    def usernames(self):
-        with _database as cur:
+    def usernames(cls):
+        """
+            This is used to get all the usernames in the system.
+        """
+        with _DATABASE as cur:
             rows = cur.execute("SELECT username FROM users")
 
         row_list = []
@@ -962,8 +1050,11 @@ class UserManager:
         return row_list
 
     @classmethod
-    def admin_usernames(self):
-        with _database as cur:
+    def admin_usernames(cls):
+        """
+            This is used to get all the admin usernames in the system.
+        """
+        with _DATABASE as cur:
             rows = cur.execute("SELECT username FROM users WHERE level >= ?", (str(2)))
 
         row_list = []
@@ -976,8 +1067,11 @@ class UserManager:
         return row_list
 
     @classmethod
-    def guest_usernames(self):
-        with _database as cur:
+    def guest_usernames(cls):
+        """
+            This is used to get all the guest usernames in the system.
+        """
+        with _DATABASE as cur:
             rows = cur.execute("SELECT username FROM users WHERE level = ?", (str(1)))
         row_list = []
         for row in rows:
@@ -989,7 +1083,10 @@ class UserManager:
         return row_list
 
     @classmethod
-    def create(self, admin_user=User, user=User, password=""):
+    def create(cls, admin_user=User, user=User, password=""):
+        """
+            This is used to create a new user.
+        """
         global admin_level, guest_level
         if not admin_user.logged_in:
             raise PermissionDenied("Admin user is not logged in.")
@@ -1005,43 +1102,34 @@ class UserManager:
                  level is {guest_level}"""
             )
 
+        permission_error = True
+
         if admin_user.super_admin and admin_user.level > user.level:
-            with _database as cur:
+            permission_error = False
+            with _DATABASE as cur:
                 cur.execute("""
                     INSERT INTO users(username, password, level)
                     VALUES(?, ?, ?)
                 """, (str(user.username), str(password), int(user.level)))
 
             return True
-        else:
+
+        if permission_error:
             raise PermissionDeniedToCreateAccount(
                 f"""User is required to be a Super Admin but the user
                  provided is only a {admin_user.level_text}"""
             )
-            return
 
-    def __del__(self):
-        pass
-
-    def __init__(self):
-        self.__del__()
-
-
-class ManagementSetupFailure(SystemError):
+def setup(database=None):
     """
-    Used to notify the user if the file has not
-    correctly setup.
+        This is used to setup the in this module.
     """
-
-    pass
-
-
-def setup(database=None, test=False):
-    global _database
+    global _DATABASE
 
     if database is None:
         raise ManagementSetupFailure("Failed to find a database instance.")
-    else:
+
+    if database:
         try:
             with database as cur:
                 if not cur:
@@ -1052,6 +1140,6 @@ def setup(database=None, test=False):
         except ManagementSetupFailure as error:
             raise ManagementSetupFailure(error) from error
 
-    _database = database
+    _DATABASE = database
 
     return True
