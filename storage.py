@@ -41,7 +41,13 @@ class Database:
         """
             This is used to save the database.
         """
-        self._connection.commit()
+        try:
+            self._connection.commit()
+            return True
+        except sqlite3.Error:
+            return False
+        except AttributeError:
+            return False
 
     def __enter__(self):
         """
@@ -85,10 +91,13 @@ class Database:
         self._cursor = None
         self._delete_on_close = delete_on_close
 
-        if test_mode:
-            return
+        file_pattern = r"[a-z]*^[^.()1-9/\\_]+$"
 
-        file_pattern = r"[a-z]*_*^[^.()1-9/\\]+$"
+        if len(self._file_name) <= 3:
+            raise DatabaseNamingError("Database file name is too short.")
+
+        if len(self._file_name) >= 20:
+            raise DatabaseNamingError("Database file name is too long.")
 
         if not regex.match(file_pattern, self._file_name):
             raise DatabaseNamingError("Database file name is incorrect.")
@@ -96,11 +105,10 @@ class Database:
         if regex.match(r"^$|\s+", self._file_name):
             raise DatabaseNamingError("Database file name contains forbidden characters.")
 
-        if len(self._file_name) <= 3:
-            raise DatabaseNamingError("Database file name is too short.")
+        self._file_name = self._file_name + ".db"
 
-        if len(self._file_name) >= 20:
-            raise DatabaseNamingError("Database file name is too long.")
+        if test_mode:
+            return
 
         self._connection = sqlite3.connect(self._file_name)
 
@@ -184,7 +192,7 @@ class Database:
 
 
 if __name__ == '__main__':
-    db = Database('test.db')
+    db = Database('test')
     with db as cursor:
         print(cursor)
         users = cursor.execute('SELECT username FROM users')
