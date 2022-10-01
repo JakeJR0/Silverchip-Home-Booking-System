@@ -1,11 +1,13 @@
-# Storage.py
+"""
+    This file controls the storage for the program.
+"""
 
 # Imports the required modules
 import os
 import sqlite3
 
 # Price setting for each month
-_database_file_extension = "db"
+_DATABASE_FILE_EXTENSION = "db"
 month_prices = {
     1: 125,
     2: 125,
@@ -28,11 +30,22 @@ class DatabaseNamingError(ValueError):
     if the database file name is incorrect.
     """
 
-    pass
-
+    def __init__(self, *args, **kwargs):
+        """
+        This is used to initialise the class.
+        """
+        ValueError.__init__(self, *args, **kwargs)
 
 class DatabaseStartUpFailure(SystemError):
-    pass
+    """
+        This is used to create an error when the database
+        fails to start up.
+    """
+    def __init__(self, *args, **kwargs):
+        """
+        This is used to initialise the class.
+        """
+        SystemError.__init__(self, *args, **kwargs)
 
 
 class Database:
@@ -52,10 +65,16 @@ class Database:
 
     @property
     def con(self):
+        """
+            This is used to get the connection to the database.
+        """
         return self._con
 
     # Save function, data validation for system errors
     def save(self):
+        """
+            This is used to save the database.
+        """
         try:
             self._con.commit()
             return True
@@ -63,6 +82,9 @@ class Database:
             return False
 
     def _setup(self):
+        """
+            This is used to setup the database.
+        """
         try:
             con = self._con
             con.execute(
@@ -135,7 +157,7 @@ class Database:
                     (i, "root", 3),
                 )
 
-            for month_id in month_prices:
+            for month_id in month_prices.items():
                 self._con.execute(
                     """
                             INSERT INTO holiday_prices(month, price)
@@ -146,25 +168,28 @@ class Database:
             con.commit()
 
         # Database error handling
-        except Exception as e:
+        except Exception as error:
             if self._remove_on_setup_failure:
-                file = f"{self._db_name}.{_database_file_extension}"
+                file = f"{self._db_name}.{_DATABASE_FILE_EXTENSION}"
                 if os.path.exists(file):
                     os.remove(file)
 
-                if os.path.exists("{}.db-journal".format(self._db_name)):
-                    os.remove("{}.db-journal".format(self._db_name))
-            print("Database Error: {}".format(e))
-            raise DatabaseStartUpFailure(e)
+                if os.path.exists(f"{self._db_name}.db-journal"):
+                    os.remove(f"{self._db_name}.db-journal")
+            print(f"Database Error: {error}")
+            raise DatabaseStartUpFailure(error) from error
 
     def __del__(self):
+        """
+            This is used to ensure that the database is closed
+        """
         try:
             if self._auto_save:
                 self._con.commit()
             self._con.close()
 
             if self._delete_on_close:
-                file = f"{self._db_name}.{_database_file_extension}"
+                file = f"{self._db_name}.{_DATABASE_FILE_EXTENSION}"
                 if os.path.exists(file):
                     os.remove(file)
         except AttributeError:
@@ -177,11 +202,14 @@ class Database:
                 pass
 
     def __init__(self, db_name="", test_mode=False, delete_on_close=False):
+        """
+            This is used to initialise the database class.
+        """
         self._test_mode = test_mode
 
         # Slices the name to isolate any extension within the file name.
 
-        file_name_extension = db_name[: -len(_database_file_extension)]
+        file_name_extension = db_name[: -len(_DATABASE_FILE_EXTENSION)]
 
         # Checks if the file extension is present for any
         # of the file extensions below.
@@ -207,9 +235,9 @@ class Database:
             # Stops the code before it creates a database connection.
             return
 
-        setup_file = "{}.{}".format(db_name, _database_file_extension)
+        setup_file = f"{db_name}.{_DATABASE_FILE_EXTENSION}"
         setup = os.path.exists(setup_file)
-        self._con = sqlite3.connect(f"{db_name}.{_database_file_extension}")
+        self._con = sqlite3.connect(f"{db_name}.{_DATABASE_FILE_EXTENSION}")
         self._db_name = db_name
         self._delete_on_close = delete_on_close
 
