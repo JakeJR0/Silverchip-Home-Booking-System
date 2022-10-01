@@ -331,10 +331,14 @@ class Booking:
 
     def _get_booking_id(self):
         start_id = 100000
-        for row in _database.con.execute(
-            """SELECT MAX(ID) + 1 AS new_id
-                                         FROM bookings"""
-        ):
+        rows = None
+        with _database as cur:
+            rows = cur.execute('''
+                SELECT MAX(ID) + 1 AS new_id
+                FROM Bookings
+            ''')
+
+        for row in rows:
             print(row)
             if row[0] is not None:
                 start_id = row[0]
@@ -375,11 +379,14 @@ class Booking:
         date_range = pd.date_range(start=start, end=end, freq="1d")
 
         month_prices = {}
+        rows = None
+        with _database as cur:
+            rows = cur.execute('''
+                SELECT month, price
+                FROM holiday_prices
+            ''')
 
-        for row in _database.con.execute(
-            """SELECT month,
-                                         price FROM holiday_prices"""
-        ):
+        for row in rows:
             month_prices[row[0]] = row[1]
         print(month_prices)
         for date in date_range.date:
@@ -436,30 +443,24 @@ class Booking:
                 bid,
             )
             print(bid, data)
-
-            _database.con.execute(
-                """
-                                  UPDATE bookings
-                                  SET
-                                    first_name=?,
-                                    last_name=?,
-                                    mobile_number=?,
-                                    email_address=?,
-                                    postcode=?,
-                                    pets=?,
-                                    start_time=?,
-                                    end_time=?
-                                  WHERE
-                                    ID=?
-                                  """,
-                data,
-            )
-
-            _database.save()
+            with _database as cur:
+                cur.execute('''
+                    UPDATE bookings
+                    SET
+                        first_name=?,
+                        last_name=?,
+                        mobile_number=?,
+                        email_address=?,
+                        postcode=?,
+                        pets=?,
+                        start_time=?,
+                        end_time=?
+                    WHERE
+                        ID=?
+                ''', data)
             return True
-        except Exception as e:
-            raise BookingSaveError(e)
-            return False
+        except Exception as error:
+            raise BookingSaveError(error) from error
 
     def delete(self):
         if self._booking_id is None:
@@ -467,17 +468,14 @@ class Booking:
             return False
 
         try:
-            _database.con.execute(
-                """
-                              DELETE FROM bookings
-                              WHERE ID=?
-                              """,
-                (self._booking_id,),
-            )
-            _database.save()
+            with _database as cur:
+                cur.execute('''
+                    DELETE FROM bookings
+                    WHERE ID=?
+                ''', (self._booking_id,))
             return True
-        except Exception as e:
-            print(e)
+        except Exception as error:
+            print(error)
             return False
 
     def __str__(self):
@@ -549,43 +547,40 @@ class Booking:
                 start,
                 end,
             )
-
-            _database.con.execute(
-                """
-                                INSERT INTO bookings
-                                (ID, first_name, last_name, mobile_number,
-                                email_address, postcode, pets, start_time,
-                                end_time)
-                                VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
-                                """,
-                data,
-            )
-            _database.save()
+            with _database as cur:
+                cur.execute('''
+                    INSERT INTO bookings
+                        (ID, first_name, last_name, mobile_number,
+                        email_address, postcode, pets, start_time,
+                        end_time)
+                    VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ''', data)
 
 
 def get_dates():
     pandas_df = pd.DataFrame({"start_date": [], "end_date": []})
+    with _database as cur:
+        for row in cur.execute(
+        """SELECT start_time, end_time
+        FROM bookings"""
+        ):
 
-    for row in _database.con.execute(
-        """SELECT start_time,
-                                        end_time FROM bookings"""
-    ):
-        format = "%d/%m/%Y %H:%M"
-        if len(row[0]) != len(format):
-            format = "%d/%m/%Y"
+            format = "%d/%m/%Y %H:%M"
+            if len(row[0]) != len(format):
+                format = "%d/%m/%Y"
 
-        s_d = datetime.strptime(row[0], format)
-        e_d = datetime.strptime(row[0], format)
-
-        pandas_df.loc[len(pandas_df.index)] = [s_d, e_d]
+            s_d = datetime.strptime(row[0], format)
+            e_d = datetime.strptime(row[0], format)
+            pandas_df.loc[len(pandas_df.index)] = [s_d, e_d]
     return pandas_df
 
 
 class BookingManagement:
     @classmethod
     def booking_count(self):
-        for count_db in _database.con.execute("SELECT COUNT(*) FROM bookings"):
-            return count_db[0] or 0
+        with _database as cur:
+            for count_db in cur.execute("SELECT COUNT(*) FROM bookings"):
+                return count_db[0] or 0
         return 0
 
     @classmethod
@@ -610,11 +605,13 @@ class BookingManagement:
         booking_range = pd.date_range(
             start=start_date_string, end=end_date_string, freq="1H"
         ).date
-
-        for row in _database.con.execute(
-            """SELECT start_time,
-                                         end_time FROM bookings"""
-        ):
+        booking_rows = None
+        with _database as cur:
+            booking_rows = cur.execute(
+                """SELECT start_time, end_time
+                FROM bookings"""
+            )
+        for row in booking_rows:
             start = str(row[0])[0:10]
             end = str(row[1])[0:10]
             start_time = datetime.strptime(start, "%d/%m/%Y") - timedelta(days=2)
@@ -657,11 +654,12 @@ class BookingManagement:
     @classmethod
     def get_bookings(self):
         bookings = []
-
-        for row in _database.con.execute(
-            """SELECT ID, first_name, last_name, mobile_number, email_address,
-            postcode, start_time, end_time, pets FROM bookings"""
-        ):
+        booking_rows = None
+        with _database as cur:
+            booking_rows = cur.execute(
+                """SELECT ID, first_name, last_name, mobile_number, email_address,
+            postcode, start_time, end_time, pets FROM bookings""")
+        for row in booking_rows:
             user_data = FormattedUserBookingData(
                 first_name=row[1],
                 last_name=row[2],
@@ -748,23 +746,26 @@ class User:
                             FROM users
                             WHERE username=?
                             """
-
-        for row in _database.con.execute(sql_select, username):
-            user = User(row[0], pl=row[1])
-            return user
+        with _database as cur:
+            for row in cur.execute(sql_select, username):
+                user = User(row[0], pl=row[1])
+                return user
 
     def _login(self):
         # This is used to create
         # a user object by checking the username
         # and password with the one within the database.
         username, password = self._username, self._password
+        sql_selected_users = None
+        with _database as cur:
+            sql_selected_users = cur.execute(
+                "SELECT level FROM users WHERE username=? AND password=?",
+                (username, password)
+            )
 
-        for row in _database.con.execute(
-            "SELECT level FROM users WHERE username=? AND password=?",
-            (username, password),
-        ):
-            self._pl = row[0]
-            self._logged_in = True
+            for row in sql_selected_users:
+                self._pl = row[0]
+                self._logged_in = True
 
         if not self._logged_in:
             raise FailedToLoginToUser(
@@ -904,16 +905,12 @@ class UserManager:
         if acting_user.logged_in:
             if acting_user == user.level or acting_user.level > user:
                 username = user.username
-                _database.con.execute(
-                    """
-                              UPDATE users
-                              SET password=?
-                              WHERE username=?
-                              """,
-                    (password, username),
-                )
-
-                _database.save()
+                with _database as cur:
+                    cur.execute('''
+                        UPDATE users
+                        SET password=?
+                        WHERE username=?
+                    ''', (password, username))
             else:
                 raise PermissionDenied(
                     """You are not authorised to modify
@@ -933,18 +930,15 @@ class UserManager:
             ):
                 try:
                     username = user_to_remove.username
-                    _database.con.execute(
-                        """
-                                DELETE FROM users
-                                WHERE username=?
-                                """,
-                        (username,),
-                    )
-                    _database.save()
+                    with _database as cur:
+                        cur.execute('''
+                        DELETE FROM users
+                        WHERE username=?
+                        ''', (username,))
                     del user_to_remove
                     return True
-                except Exception as e:
-                    return e
+                except Exception as error:
+                    return error
             else:
                 raise PermissionDenied(
                     """You are not authorised to modify
@@ -955,7 +949,9 @@ class UserManager:
 
     @classmethod
     def usernames(self):
-        rows = _database.con.execute("SELECT username FROM users")
+        with _database as cur:
+            rows = cur.execute("SELECT username FROM users")
+
         row_list = []
         for row in rows:
             row_list.append(row[0])
@@ -967,9 +963,8 @@ class UserManager:
 
     @classmethod
     def admin_usernames(self):
-        rows = _database.con.execute(
-            "SELECT username FROM users WHERE level >= ?", (str(2))
-        )
+        with _database as cur:
+            rows = cur.execute("SELECT username FROM users WHERE level >= ?", (str(2)))
 
         row_list = []
         for row in rows:
@@ -982,9 +977,8 @@ class UserManager:
 
     @classmethod
     def guest_usernames(self):
-        rows = _database.con.execute(
-            "SELECT username FROM users WHERE level = ?", (str(1))
-        )
+        with _database as cur:
+            rows = cur.execute("SELECT username FROM users WHERE level = ?", (str(1)))
         row_list = []
         for row in rows:
             row_list.append(row[0])
@@ -1012,14 +1006,12 @@ class UserManager:
             )
 
         if admin_user.super_admin and admin_user.level > user.level:
-            _database.con.execute(
-                """
-                            INSERT INTO users(username, password, level)
-                  VALUES(?, ?, ?)
-                            """,
-                (str(user.username), str(password), int(user.level)),
-            )
-            _database.con.commit()
+            with _database as cur:
+                cur.execute("""
+                    INSERT INTO users(username, password, level)
+                    VALUES(?, ?, ?)
+                """, (str(user.username), str(password), int(user.level)))
+
             return True
         else:
             raise PermissionDeniedToCreateAccount(
@@ -1051,15 +1043,14 @@ def setup(database=None, test=False):
         raise ManagementSetupFailure("Failed to find a database instance.")
     else:
         try:
-            if not database.con:
-                raise ManagementSetupFailure(
-                    """Failed to find database
-                 connection."""
-                )
+            with database as cur:
+                if not cur:
+                    raise ManagementSetupFailure(
+                        """Failed to find database
+                    connection."""
+                    )
         except ManagementSetupFailure as error:
-            raise ManagementSetupFailure(error)
-        except:
-            pass
+            raise ManagementSetupFailure(error) from error
 
     _database = database
 

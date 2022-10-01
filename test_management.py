@@ -203,34 +203,35 @@ def test__get_dates():
     management.setup(test_db)
 
     data = (1, "J", "J", "J", "0", "0", "0", "27/04/2022", "28/04/2022")
-    test_db.con.execute(
-        """
-                      INSERT INTO bookings(                               ID,
-                      first_name,
-                      last_name,
-                      mobile_number,
-                      email_address,
-                      postcode,
-                      pets,
-                      start_time,
-                      end_time)
-                      VALUES(
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?,
-                        ?
-                      )
+    with test_db as cur:
+        cur.execute(
+            """
+                        INSERT INTO bookings(
+                        ID,
+                        first_name,
+                        last_name,
+                        mobile_number,
+                        email_address,
+                        postcode,
+                        pets,
+                        start_time,
+                        end_time)
+                        VALUES(
+                            ?,
+                            ?,
+                            ?,
+                            ?,
+                            ?,
+                            ?,
+                            ?,
+                            ?,
+                            ?
+                        )
 
-                      """,
-        data,
-    )
+                        """,
+            data,
+        )
 
-    test_db.save()
     dates = management.get_dates()
     for i in dates.index:
         start_date = dates.loc[i, "start_date"]
