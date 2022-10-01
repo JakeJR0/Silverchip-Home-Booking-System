@@ -7,6 +7,22 @@ import pytest
 import management
 from storage import Database
 
+def setup_test_database(test_db_name="", delete_on_close=False, test_mode=False):
+    """
+        This sets up a test database.
+    """
+    if management.DATABASE is not None:
+        try:
+            management.DATABASE.close()
+        except AttributeError:
+            pass
+
+    management.DATABASE = Database(test_db_name, delete_on_close=delete_on_close, 
+    test_mode=test_mode)
+    new_db = management.DATABASE
+    
+    return new_db
+
 
 class TestUser:
     """
@@ -34,8 +50,7 @@ class TestUser:
         # This creates a database to test on.
         # which will not have any effect on the
         # real database.
-        test_db = Database("loggedIn", delete_on_close=True)
-        management.setup(test_db)
+        test_db = setup_test_database("loggedIn", delete_on_close=True)
 
         # Creates a user instance which should be
         # logged out.
@@ -62,8 +77,7 @@ class TestUser:
         # This creates a database to test on.
         # which will not have any effect on the
         # real database.
-        test_db = Database("superAdmin", delete_on_close=True)
-        management.setup(test_db)
+        test_db = setup_test_database("superAdmin", delete_on_close=True)
 
         # This test is used to see if a user will
         # be set to super admin if they are not
@@ -100,9 +114,7 @@ class TestUser:
         # This creates a database to test on.
         # which will not have any effect on the
         # real database.
-
-        test_db = Database("admin", delete_on_close=True)
-        management.setup(test_db)
+        test_db = setup_test_database("admin", delete_on_close=True)
 
         # This test is used to see if a user will
         # be set to admin if they are not
@@ -141,9 +153,7 @@ class TestUserManager:
         # This creates a database to test on.
         # which will not have any effect on the
         # real database.
-
-        test_db = Database("remove", delete_on_close=True)
-        management.setup(test_db)
+        test_db = setup_test_database("remove", delete_on_close=True)
 
         admin_user = management.User("System", "root", login=True)
         guest_user = management.User("Guest", "root", login=True)
@@ -199,8 +209,7 @@ def test__get_dates():
     """
         This tests the _get_dates method.
     """
-    test_db = Database("admin", delete_on_close=True)
-    management.setup(test_db)
+    test_db = setup_test_database("admin", delete_on_close=True)
 
     data = (1, "J", "J", "J", "0", "0", "0", "27/04/2022", "28/04/2022")
     with test_db as cur:

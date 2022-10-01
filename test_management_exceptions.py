@@ -9,6 +9,14 @@ from management_exceptions import FormattedUserError, BookingError, FailedToLogi
 from management_exceptions import PermissionDeniedToCreateAccount, PermissionDenied
 from management_exceptions import InvalidAccountLevel, FailedToMakeUserInstance
 from management_exceptions import PasswordValidationError, ManagementSetupFailure
+from management_exceptions import BookingSaveError
+
+def test_booking_save_error():
+    """
+        This tests the BookingSaveError class.
+    """
+    with pytest.raises(BookingSaveError):
+        raise BookingSaveError("Test")
 
 def test_incorrect_formatted_date_and_time():
     """

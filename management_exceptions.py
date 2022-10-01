@@ -49,7 +49,15 @@ class FailedToLoginToUser(ValueError):
         """
         ValueError.__init__(self, *args, **kwargs)
 
-
+class BookingSaveError(ValueError):
+    """
+        This is used to raise an error when the user fails to login.
+    """
+    def __init__(self, *args, **kwargs):
+        """
+        This is used to initialise the class.
+        """
+        ValueError.__init__(self, *args, **kwargs)
 class PermissionDeniedToCreateAccount(ValueError):
     """
         This is used to raise an error when the user fails to create an account.

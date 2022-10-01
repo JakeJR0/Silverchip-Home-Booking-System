@@ -5,14 +5,15 @@
 # Import modules
 from datetime import datetime, timedelta
 import pandas as pd
-
+import storage
 from management_exceptions import IncorrectFormattedDateAndTime, FormattedTimeAndDateError
 from management_exceptions import FormattedUserError, BookingError, FailedToLoginToUser
 from management_exceptions import PermissionDeniedToCreateAccount, PermissionDenied
 from management_exceptions import InvalidAccountLevel, FailedToMakeUserInstance
 from management_exceptions import PasswordValidationError, ManagementSetupFailure
+from management_exceptions import BookingSaveError
 
-_DATABASE = None
+DATABASE = storage.Database()
 
 # Coversion of date from US format to UK format
 def us_date_to_uk(date=""):
@@ -369,7 +370,7 @@ class Booking:
         """
         start_id = 100000
         rows = None
-        with _DATABASE as cur:
+        with DATABASE as cur:
             rows = cur.execute('''
                 SELECT MAX(ID) + 1 AS new_id
                 FROM Bookings
@@ -438,7 +439,7 @@ class Booking:
 
         month_prices = {}
         rows = None
-        with _DATABASE as cur:
+        with DATABASE as cur:
             rows = cur.execute('''
                 SELECT month, price
                 FROM holiday_prices
@@ -506,7 +507,7 @@ class Booking:
                 bid,
             )
             print(bid, data)
-            with _DATABASE as cur:
+            with DATABASE as cur:
                 cur.execute('''
                     UPDATE bookings
                     SET
@@ -534,7 +535,7 @@ class Booking:
             return False
 
         try:
-            with _DATABASE as cur:
+            with DATABASE as cur:
                 cur.execute('''
                     DELETE FROM bookings
                     WHERE ID=?
@@ -616,7 +617,7 @@ class Booking:
                 start,
                 end,
             )
-            with _DATABASE as cur:
+            with DATABASE as cur:
                 cur.execute('''
                     INSERT INTO bookings
                         (ID, first_name, last_name, mobile_number,
@@ -631,7 +632,7 @@ def get_dates():
         This is used to get the dates from the database.
     """
     pandas_df = pd.DataFrame({"start_date": [], "end_date": []})
-    with _DATABASE as cur:
+    with DATABASE as cur:
         for row in cur.execute(
         """SELECT start_time, end_time
         FROM bookings"""
@@ -656,7 +657,7 @@ class BookingManagement:
         """
             This is used to get the number of bookings.
         """
-        with _DATABASE as cur:
+        with DATABASE as cur:
             for count_db in cur.execute("SELECT COUNT(*) FROM bookings"):
                 return count_db[0] or 0
         return 0
@@ -686,7 +687,7 @@ class BookingManagement:
             start=start_date_string, end=end_date_string, freq="1H"
         ).date
         booking_rows = None
-        with _DATABASE as cur:
+        with DATABASE as cur:
             booking_rows = cur.execute(
                 """SELECT start_time, end_time
                 FROM bookings"""
@@ -738,7 +739,7 @@ class BookingManagement:
         """
         bookings = []
         booking_rows = None
-        with _DATABASE as cur:
+        with DATABASE as cur:
             booking_rows = cur.execute(
                 """SELECT ID, first_name, last_name, mobile_number, email_address,
             postcode, start_time, end_time, pets FROM bookings""")
@@ -800,7 +801,7 @@ class User:
                             FROM users
                             WHERE username=?
                             """
-        with _DATABASE as cur:
+        with DATABASE as cur:
             for row in cur.execute(sql_select, username):
                 user = User(row[0], permission_level=row[1])
                 return user
@@ -815,7 +816,7 @@ class User:
         """
         username, password = self._username, self._password
         sql_selected_users = None
-        with _DATABASE as cur:
+        with DATABASE as cur:
             sql_selected_users = cur.execute(
                 "SELECT level FROM users WHERE username=? AND password=?",
                 (username, password)
@@ -987,7 +988,7 @@ class UserManager:
         if acting_user.logged_in:
             if acting_user == user.level or acting_user.level > user:
                 username = user.username
-                with _DATABASE as cur:
+                with DATABASE as cur:
                     cur.execute('''
                         UPDATE users
                         SET password=?
@@ -1015,7 +1016,7 @@ class UserManager:
             ):
                 try:
                     username = user_to_remove.username
-                    with _DATABASE as cur:
+                    with DATABASE as cur:
                         cur.execute('''
                         DELETE FROM users
                         WHERE username=?
@@ -1037,7 +1038,7 @@ class UserManager:
         """
             This is used to get all the usernames in the system.
         """
-        with _DATABASE as cur:
+        with DATABASE as cur:
             rows = cur.execute("SELECT username FROM users")
 
         row_list = []
@@ -1056,7 +1057,7 @@ class UserManager:
         """
 
         row_list = []
-        with _DATABASE as cur:
+        with DATABASE as cur:
             rows = cur.execute("SELECT username FROM users WHERE level >= ?", (str(2)))
             for row in rows:
                 row_list.append(row[0])
@@ -1072,7 +1073,7 @@ class UserManager:
             This is used to get all the guest usernames in the system.
         """
         row_list = []
-        with _DATABASE as cur:
+        with DATABASE as cur:
             rows = cur.execute("SELECT username FROM users WHERE level = ?", (str(1)))
 
             for row in rows:
@@ -1088,7 +1089,6 @@ class UserManager:
         """
             This is used to create a new user.
         """
-        global admin_level, guest_level
         if not admin_user.logged_in:
             raise PermissionDenied("Admin user is not logged in.")
 
@@ -1107,7 +1107,7 @@ class UserManager:
 
         if admin_user.super_admin and admin_user.level > user.level:
             permission_error = False
-            with _DATABASE as cur:
+            with DATABASE as cur:
                 cur.execute("""
                     INSERT INTO users(username, password, level)
                     VALUES(?, ?, ?)
@@ -1121,26 +1121,3 @@ class UserManager:
                  provided is only a {admin_user.level_text}"""
             )
 
-def setup(database=None):
-    """
-        This is used to setup the in this module.
-    """
-    global _DATABASE
-
-    if database is None:
-        raise ManagementSetupFailure("Failed to find a database instance.")
-
-    if database:
-        try:
-            with database as cur:
-                if not cur:
-                    raise ManagementSetupFailure(
-                        """Failed to find database
-                    connection."""
-                    )
-        except ManagementSetupFailure as error:
-            raise ManagementSetupFailure(error) from error
-
-    _DATABASE = database
-
-    return True

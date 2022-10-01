@@ -11,7 +11,6 @@ from tkinter import *
 from tkinter import messagebox as box
 from tkcalendar import DateEntry
 import management
-import storage
 
 class InvalidPageParent(ValueError):
     """
@@ -1744,6 +1743,4 @@ class Application:
 
 
 if __name__ == "__main__":
-    database = storage.Database("database")
-    management.setup(database)
     application = Application()
