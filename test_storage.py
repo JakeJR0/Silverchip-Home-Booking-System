@@ -1,9 +1,18 @@
-import pytest
-from storage import *
+"""
+    This file tests the storage module.
+"""
 
+import pytest
+from storage import Database, DatabaseNamingError, month_prices
 
 class TestDatabase:
+    """
+        This is used to test the Database class.
+    """
     def test___init__(self):
+        """
+            This tests the __init__ method.
+        """
 
         # These test the data validation
         # that is applied to the name of
@@ -55,10 +64,8 @@ class TestDatabase:
         ):
             assert (
                 row[0] == 3
-            ), """System User level is not at level 3 instead
-                it is at level {}.""".format(
-                str(row[0])
-            )
+            ), f"""System User level is not at level 3 instead
+                it is at level {str(row[0])}."""
             found = True
 
         assert found is True, "System User was not found within the database."
