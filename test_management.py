@@ -20,7 +20,7 @@ def setup_test_database(test_db_name="", delete_on_close=False, test_mode=False)
     management.DATABASE = Database(test_db_name, delete_on_close=delete_on_close, 
     test_mode=test_mode)
     new_db = management.DATABASE
-    
+
     return new_db
 
 
@@ -252,3 +252,15 @@ def test__get_dates():
             end_date.strftime("%d/%m/%Y") == "27/04/2022"
         ), "The end date should be 27/04/2022"
     del test_db
+
+def test_account_levels():
+    """
+        This is to ensure that the account
+        levels are correct.
+    """
+    assert management.GUEST_LEVEL > 0, \
+        "Guest level should be greater than 0."
+    assert management.ADMIN_LEVEL > management.GUEST_LEVEL,\
+        "Admin level should be higher than guest level."
+    assert management.SUPER_ADMIN_LEVEL > management.ADMIN_LEVEL,\
+        "Super admin level should be higher than admin level."
