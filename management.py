@@ -375,10 +375,10 @@ class Booking:
                 FROM Bookings
             ''')
 
-        for row in rows:
-            print(row)
-            if row[0] is not None:
-                start_id = row[0]
+            for row in rows:
+                print(row)
+                if row[0] is not None:
+                    start_id = row[0]
 
         return start_id
 
@@ -444,8 +444,8 @@ class Booking:
                 FROM holiday_prices
             ''')
 
-        for row in rows:
-            month_prices[row[0]] = row[1]
+            for row in rows:
+                month_prices[row[0]] = row[1]
         print(month_prices)
         for date in date_range.date:
             date = us_date_to_uk(str(date))
@@ -691,44 +691,44 @@ class BookingManagement:
                 """SELECT start_time, end_time
                 FROM bookings"""
             )
-        for row in booking_rows:
-            start = str(row[0])[0:10]
-            end = str(row[1])[0:10]
-            start_time = datetime.strptime(start, "%d/%m/%Y") - timedelta(days=2)
-            end_time = datetime.strptime(end, "%d/%m/%Y") + timedelta(days=2)
+            for row in booking_rows:
+                start = str(row[0])[0:10]
+                end = str(row[1])[0:10]
+                start_time = datetime.strptime(start, "%d/%m/%Y") - timedelta(days=2)
+                end_time = datetime.strptime(end, "%d/%m/%Y") + timedelta(days=2)
+
+                db_booking_range = pd.date_range(
+                    start=start_time,
+                    end=end_time,
+                    freq="1H",
+                ).date
+
+                for date in db_booking_range:
+                    if date in booking_range:
+                        available = False
+                        print("Banned Date.")
+
+            weekend_allowed = False
+            current_time = datetime.now()
 
             db_booking_range = pd.date_range(
-                start=start_time,
-                end=end_time,
-                freq="1H",
+                start=start_date_string, end=end_date_string, freq="1d"
             ).date
 
-            for date in db_booking_range:
-                if date in booking_range:
-                    available = False
-                    print("Banned Date.")
+            print(abs(current_time - start_date_string).days)
+            if abs(current_time - start_date_string).days >= 14:
+                weekend_allowed = True
+                print("Allowed")
+            else:
+                print("Not Allowed")
 
-        weekend_allowed = False
-        current_time = datetime.now()
-
-        db_booking_range = pd.date_range(
-            start=start_date_string, end=end_date_string, freq="1d"
-        ).date
-
-        print(abs(current_time - start_date_string).days)
-        if abs(current_time - start_date_string).days >= 14:
-            weekend_allowed = True
-            print("Allowed")
-        else:
-            print("Not Allowed")
-
-            for date in db_booking_range:
-                if date in booking_range:
-                    available = False
-
-                if date.strftime("%A") == "Sunday" or "Saturday":
-                    if not weekend_allowed:
+                for date in db_booking_range:
+                    if date in booking_range:
                         available = False
+
+                    if date.strftime("%A") == "Sunday" or "Saturday":
+                        if not weekend_allowed:
+                            available = False
         return available
 
     @classmethod
@@ -742,37 +742,37 @@ class BookingManagement:
             booking_rows = cur.execute(
                 """SELECT ID, first_name, last_name, mobile_number, email_address,
             postcode, start_time, end_time, pets FROM bookings""")
-        for row in booking_rows:
-            user_data = FormattedUserBookingData(
-                first_name=row[1],
-                last_name=row[2],
-                phone_number=row[3],
-                email=row[4],
-                postcode=row[5],
-                pets=row[8],
-            )
+            for row in booking_rows:
+                user_data = FormattedUserBookingData(
+                    first_name=row[1],
+                    last_name=row[2],
+                    phone_number=row[3],
+                    email=row[4],
+                    postcode=row[5],
+                    pets=row[8],
+                )
 
-            start_time_before_slicing = row[6]
-            start_time_date = start_time_before_slicing[0:10]
-            print(start_time_date)
-            start_time_hour = start_time_before_slicing[11:13]
-            start_time_min = start_time_before_slicing[14:16]
+                start_time_before_slicing = row[6]
+                start_time_date = start_time_before_slicing[0:10]
+                print(start_time_date)
+                start_time_hour = start_time_before_slicing[11:13]
+                start_time_min = start_time_before_slicing[14:16]
 
-            if ":" in start_time_hour:
-                start_time_hour = start_time_hour[:-1]
+                if ":" in start_time_hour:
+                    start_time_hour = start_time_hour[:-1]
 
-            end_time_before_slicing = row[7]
-            end_time_date = end_time_before_slicing[0:10]
-            end_time_hour = end_time_before_slicing[11:13]
-            end_time_min = end_time_before_slicing[14:16]
+                end_time_before_slicing = row[7]
+                end_time_date = end_time_before_slicing[0:10]
+                end_time_hour = end_time_before_slicing[11:13]
+                end_time_min = end_time_before_slicing[14:16]
 
-            start_time = FormattedTimeAndDate(
-                start_time_date, start_time_hour, start_time_min
-            )
-            end_time = FormattedTimeAndDate(end_time_date, end_time_hour, end_time_min)
+                start_time = FormattedTimeAndDate(
+                    start_time_date, start_time_hour, start_time_min
+                )
+                end_time = FormattedTimeAndDate(end_time_date, end_time_hour, end_time_min)
 
-            booking = Booking(start_time, end_time, user_data, booking_id=row[0])
-            bookings.append(booking)
+                booking = Booking(start_time, end_time, user_data, booking_id=row[0])
+                bookings.append(booking)
 
         return bookings
 
@@ -1054,12 +1054,12 @@ class UserManager:
         """
             This is used to get all the admin usernames in the system.
         """
-        with _DATABASE as cur:
-            rows = cur.execute("SELECT username FROM users WHERE level >= ?", (str(2)))
 
         row_list = []
-        for row in rows:
-            row_list.append(row[0])
+        with _DATABASE as cur:
+            rows = cur.execute("SELECT username FROM users WHERE level >= ?", (str(2)))
+            for row in rows:
+                row_list.append(row[0])
 
         if len(row_list) == 0:
             row_list.append("")
@@ -1071,11 +1071,12 @@ class UserManager:
         """
             This is used to get all the guest usernames in the system.
         """
+        row_list = []
         with _DATABASE as cur:
             rows = cur.execute("SELECT username FROM users WHERE level = ?", (str(1)))
-        row_list = []
-        for row in rows:
-            row_list.append(row[0])
+
+            for row in rows:
+                row_list.append(row[0])
 
         if len(row_list) == 0:
             row_list.append("")

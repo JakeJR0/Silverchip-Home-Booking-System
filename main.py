@@ -1,26 +1,38 @@
-# Silverchip Holiday Home Booking Program
-# Designed and programmed by: Alex Unsworth, Mitchell Street
-# and Jake James-Robinson
+"""
+    Silverchip Holiday Home Booking Program
+    Designed and programmed by: Alex Unsworth, Mitchell Street
+    and Jake James-Robinson
+"""
 
 # Import Python modules
 import tkinter
 import tkinter.font as fnt
 from tkinter import *
 from tkinter import messagebox as box
+from tkcalendar import DateEntry
 import management
 import storage
-from tkcalendar import DateEntry
-
 
 class InvalidPageParent(ValueError):
-    # This is used to provide a custom error if the user is providing an
-    # invalid parent when creating a new page.
-    pass
-
+    """
+    This is used to provide a custom error if the user is providing an
+    invalid parent when creating a new page.
+    """
+    def __init__(self, *args, **kwargs):
+        """
+        This is used to initialise the class.
+        """
+        ValueError.__init__(self, *args, **kwargs)
 
 class ApplicationError(ValueError):
-    pass
-
+    """
+    This is used to create an error if the application has an error.
+    """
+    def __init__(self, *args, **kwargs):
+        """
+        This is used to initialise the class.
+        """
+        ValueError.__init__(self, *args, **kwargs)
 
 # Contains the entire GUI and its functions
 
