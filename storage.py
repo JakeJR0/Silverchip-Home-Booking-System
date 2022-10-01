@@ -54,8 +54,9 @@ class Database:
             This is used to create cursors for the database.
         """
         try:
-            self._cursor = self._connection.cursor()
-            return self._cursor
+            cur = self._connection.cursor()
+            self._cursor = cur
+            return cur
         except AttributeError:
             return None
 
@@ -145,49 +146,52 @@ class Database:
                   );
                   """
             )
+
             if not setup:
-                print("Adding data")
-                cur.execute(
-                    """
-                      INSERT INTO users(username, password, level)
-                      VALUES(?, ?, ?)
-                      """,
-                    ("System", "root", 3),
-                )
-
-                cur.execute(
-                    """
-                      INSERT INTO users(username, password, level)
-                      VALUES(?, ?, ?)
-                      """,
-                    ("Admin", "root", 2),
-                )
-
-                cur.execute(
-                    """
-                      INSERT INTO users(username, password, level)
-                      VALUES(?, ?, ?)
-                      """,
-                    ("Guest", "root", 1),
-                )
-
-                super_admins = ["JakeJR0", "squashedbanana2", "MStreet5"]
-
-                for admin in super_admins:
+                try:
                     cur.execute(
                         """
-                      INSERT INTO users(username, password, level)
-                      VALUES(?, ?, ?)
-                      """,
-                        (admin, "root", 3),
+                        INSERT INTO users(username, password, level)
+                        VALUES(?, ?, ?)
+                        """,
+                        ("System", "root", 3),
                     )
-                for month_data in month_prices.items():
+
                     cur.execute(
                         """
-                                INSERT INTO holiday_prices(month, price)
-                                VALUES(?,?)""",
-                        (month_data[0], month_data[1]),
+                        INSERT INTO users(username, password, level)
+                        VALUES(?, ?, ?)
+                        """,
+                        ("Admin", "root", 2),
                     )
+
+                    cur.execute(
+                        """
+                        INSERT INTO users(username, password, level)
+                        VALUES(?, ?, ?)
+                        """,
+                        ("Guest", "root", 1),
+                    )
+
+                    super_admins = ["JakeJR0", "squashedbanana2", "MStreet5"]
+
+                    for admin in super_admins:
+                        cur.execute(
+                            """
+                        INSERT INTO users(username, password, level)
+                        VALUES(?, ?, ?)
+                        """,
+                            (admin, "root", 3),
+                        )
+                    for month_data in month_prices.items():
+                        cur.execute(
+                            """
+                                    INSERT INTO holiday_prices(month, price)
+                                    VALUES(?,?)""",
+                            (month_data[0], month_data[1]),
+                        )
+                except sqlite3.Error:
+                    pass
 
 
 
