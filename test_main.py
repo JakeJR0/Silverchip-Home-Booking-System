@@ -4,17 +4,16 @@
 import pytest
 import main
 
-class TestInvalidPageParent:
+def test_invalid_page_parent():
     """
-        This is used to ensure that the page error works.
+        This tests the InvalidPageParent class.
     """
-    def test___init__(self):
-        """
-        This tests that the __init__ method works.
-        """
-        with pytest.raises(main.InvalidPageParent):
-            error = main.InvalidPageParent("Test")
-            assert (
-                main.InvalidPageParent("Test") is not None
-            ), "Invalid Page Parent Error, failed to create instance."
-            raise error
+    with pytest.raises(main.InvalidPageParent):
+        raise main.InvalidPageParent("Test")
+
+def test_application_error():
+    """
+        This tests the ApplicationError class.
+    """
+    with pytest.raises(main.ApplicationError):
+        raise main.ApplicationError("Test")

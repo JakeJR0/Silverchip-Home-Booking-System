@@ -61,7 +61,8 @@ class TestDatabase:
         with setup_test_db as cur:
             rows = cur.execute("SELECT * FROM users WHERE username = 'System'")
             for row in rows:
-                message = f"System User level is not at level 3 instead it is at level {str(row[2])}."
+                message = "System User level is not at "
+                message += f"level 3 instead it is at level {str(row[2])}."
                 assert (row[2] == 3), message
             found = True
 
