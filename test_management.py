@@ -1,4 +1,7 @@
-# test_management.py
+"""
+    This is a test file for the management file.
+"""
+
 # Import modules
 import pytest
 import management
@@ -6,7 +9,13 @@ from storage import Database
 
 
 class TestUser:
+    """
+        This is used to test the User Class.
+    """
     def test_username(self):
+        """
+            This tests the username property.
+        """
         test_user = management.User("System", "root")
 
         # Tests that the username is the same as the assigned
@@ -19,6 +28,9 @@ class TestUser:
         del test_user
 
     def test_logged_in(self):
+        """
+            This tests the logged_in property.
+        """
         # This creates a database to test on.
         # which will not have any effect on the
         # real database.
@@ -44,6 +56,9 @@ class TestUser:
         del test_db
 
     def test_super_admin(self):
+        """
+            This tests the super_admin property.
+        """
         # This creates a database to test on.
         # which will not have any effect on the
         # real database.
@@ -79,6 +94,9 @@ class TestUser:
         del test_db
 
     def test_admin(self):
+        """
+            This tests the admin property.
+        """
         # This creates a database to test on.
         # which will not have any effect on the
         # real database.
@@ -113,7 +131,13 @@ class TestUser:
 
 
 class TestUserManager:
+    """
+        This is used to test the UserManager Class.
+    """
     def test_remove_user(self):
+        """
+            This tests the remove_user method.
+        """
         # This creates a database to test on.
         # which will not have any effect on the
         # real database.
@@ -136,6 +160,9 @@ class TestUserManager:
 
 
 def test_us_date_to_uk():
+    """
+        This tests the us_date_to_uk method.
+    """
     # This tests the function to verify that the result is the expected result.
 
     # Sets default month for test.
@@ -154,23 +181,24 @@ def test_us_date_to_uk():
         # Creates a US Style date for
         # the function to convert.
 
-        us_date = "{}/{}/{}".format(year, month, day)
+        us_date = f"{year}/{month}/{day}"
 
         # Creates a UK Style date to assert against.
 
-        uk_date = "{}/{}/{}".format(day, month, year)
+        uk_date = f"{day}/{month}/{year}"
 
         # Converts the US Style date to UK style date.
 
         converted_date = management.us_date_to_uk(us_date)
 
         # Checks if the date is correct.
-        assert uk_date == converted_date, "Expected: {}, result: {}".format(
-            converted_date, uk_date
-        )
+        assert uk_date == converted_date, f"Expected: {converted_date}, result: {uk_date}"
 
 
 def test__get_dates():
+    """
+        This tests the _get_dates method.
+    """
     test_db = Database("admin", delete_on_close=True)
     management.setup(test_db)
 
