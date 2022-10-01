@@ -1734,10 +1734,7 @@ class Application:
         # success = management.UserManager.create(self._user, new_user,
         #                                           "password")
         self._select_page(self._login_page)
-        print("Booking Count: {}".format(
-            management.BookingManagement.booking_count()))  # DELETE THIS
         self._booking_manage_instance = None
-
         if not test_mode:
             self._root.mainloop()
 
