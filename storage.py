@@ -1,13 +1,11 @@
 """
-    This file controls the storage for the program.
+    This file manages the database for the program.
 """
 
-# Imports the required modules
-import os
 import sqlite3
+import re as regex
+import os
 
-# Price setting for each month
-_DATABASE_FILE_EXTENSION = "db"
 month_prices = {
     1: 125,
     2: 125,
@@ -23,7 +21,6 @@ month_prices = {
     12: 150,
 }
 
-
 class DatabaseNamingError(ValueError):
     """
     Used to create a naming error, for the program
@@ -36,70 +33,90 @@ class DatabaseNamingError(ValueError):
         """
         ValueError.__init__(self, *args, **kwargs)
 
-class DatabaseStartUpFailure(SystemError):
-    """
-        This is used to create an error when the database
-        fails to start up.
-    """
-    def __init__(self, *args, **kwargs):
-        """
-        This is used to initialise the class.
-        """
-        SystemError.__init__(self, *args, **kwargs)
-
-
 class Database:
     """
-    This database object is used to handle
-    the connection to the database, this makes
-    sure that the database is closed when the instance
-    is deleted.
-
-    This could also be used to moderate queries which
-    could be useful for security purposes.
+        This class is used to manage the database for the program.
     """
-
-    _auto_save = True
-    _remove_on_setup_failure = True
-    active_count = 0
-
-    @property
-    def con(self):
-        """
-            This is used to get the connection to the database.
-        """
-        return self._con
-
-    # Save function, data validation for system errors
     def save(self):
         """
             This is used to save the database.
         """
-        try:
-            self._con.commit()
-            return True
-        except SystemError:
-            return False
+        self._connection.commit()
 
-    def _setup(self):
+    def __enter__(self):
         """
-            This is used to setup the database.
+            This is used to create cursors for the database.
         """
         try:
-            con = self._con
-            con.execute(
+            self._cursor = self._connection.cursor()
+            return self._cursor
+        except AttributeError:
+            return None
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        """
+            This is used to close cursors for the database.
+        """
+        try:
+            self.save()
+            self._cursor.close()
+        except AttributeError:
+            pass
+
+    def __del__(self):
+        """
+            This is used to close the database.
+        """
+        try:
+            self._connection.close()
+            if self._delete_on_close:
+                os.remove(self._file_name)
+        except AttributeError:
+            pass
+        except SystemError:
+            pass
+
+    def __init__(self, file_name="database", test_mode=False, delete_on_close=False):
+        """
+            This is used to initialise the class.
+        """
+        self._file_name = file_name
+        setup = os.path.exists(self._file_name)
+        self._cursor = None
+        self._delete_on_close = delete_on_close
+
+        if test_mode:
+            return
+
+        file_pattern = r"[a-z]*_*^[^.()1-9/\\]+$"
+
+        if not regex.match(file_pattern, self._file_name):
+            raise DatabaseNamingError("Database file name is incorrect.")
+
+        if regex.match(r"^$|\s+", self._file_name):
+            raise DatabaseNamingError("Database file name contains forbidden characters.")
+
+        if len(self._file_name) <= 3:
+            raise DatabaseNamingError("Database file name is too short.")
+
+        if len(self._file_name) >= 20:
+            raise DatabaseNamingError("Database file name is too long.")
+
+        self._connection = sqlite3.connect(self._file_name)
+
+        with self as cur:
+            cur.execute(
                 """
-                  CREATE TABLE users(
+                  CREATE TABLE IF NOT EXISTS users(
                     username CHAR(30) PRIMARY KEY NOT NULL,
                     password CHAR(255) NOT NULL,
                     level INT(1) NOT NULL
                   );
                   """
             )
-
-            con.execute(
+            cur.execute(
                 """
-                  CREATE TABLE bookings(
+                  CREATE TABLE IF NOT EXISTS  bookings(
                     ID INTEGER PRIMARY KEY NOT NULL,
                     first_name CHAR(20) NOT NULL,
                     last_name CHAR(30) NOT NULL,
@@ -112,137 +129,64 @@ class Database:
                   );
                   """
             )
-
-            con.execute(
+            cur.execute(
                 """
-                  CREATE TABLE holiday_prices(
+                  CREATE TABLE IF NOT EXISTS  holiday_prices(
                     month INTEGER(2) PRIMARY KEY NOT NULL,
                     price REAL(5) NOT NULL
                   );
                   """
             )
-
-            con.execute(
-                """
-                  INSERT INTO users(username, password, level)
-                  VALUES(?, ?, ?)
-                  """,
-                ("System", "root", 3),
-            )
-
-            con.execute(
-                """
-                  INSERT INTO users(username, password, level)
-                  VALUES(?, ?, ?)
-                  """,
-                ("Admin", "root", 2),
-            )
-
-            con.execute(
-                """
-                  INSERT INTO users(username, password, level)
-                  VALUES(?, ?, ?)
-                  """,
-                ("Guest", "root", 1),
-            )
-
-            super_admins = ["JakeJR0", "squashedbanana2", "MStreet5"]
-
-            for i in super_admins:
-                con.execute(
+            if not setup:
+                print("Adding data")
+                cur.execute(
                     """
-                  INSERT INTO users(username, password, level)
-                  VALUES(?, ?, ?)
-                  """,
-                    (i, "root", 3),
+                      INSERT INTO users(username, password, level)
+                      VALUES(?, ?, ?)
+                      """,
+                    ("System", "root", 3),
                 )
 
-            for month_id in month_prices.items():
-                self._con.execute(
+                cur.execute(
                     """
-                            INSERT INTO holiday_prices(month, price)
-                            VALUES(?,?)""",
-                    (month_id, month_prices[month_id]),
+                      INSERT INTO users(username, password, level)
+                      VALUES(?, ?, ?)
+                      """,
+                    ("Admin", "root", 2),
                 )
 
-            con.commit()
+                cur.execute(
+                    """
+                      INSERT INTO users(username, password, level)
+                      VALUES(?, ?, ?)
+                      """,
+                    ("Guest", "root", 1),
+                )
 
-        # Database error handling
-        except Exception as error:
-            if self._remove_on_setup_failure:
-                file = f"{self._db_name}.{_DATABASE_FILE_EXTENSION}"
-                if os.path.exists(file):
-                    os.remove(file)
+                super_admins = ["JakeJR0", "squashedbanana2", "MStreet5"]
 
-                if os.path.exists(f"{self._db_name}.db-journal"):
-                    os.remove(f"{self._db_name}.db-journal")
-            print(f"Database Error: {error}")
-            raise DatabaseStartUpFailure(error) from error
+                for admin in super_admins:
+                    cur.execute(
+                        """
+                      INSERT INTO users(username, password, level)
+                      VALUES(?, ?, ?)
+                      """,
+                        (admin, "root", 3),
+                    )
+                for month_data in month_prices.items():
+                    cur.execute(
+                        """
+                                INSERT INTO holiday_prices(month, price)
+                                VALUES(?,?)""",
+                        (month_data[0], month_data[1]),
+                    )
 
-    def __del__(self):
-        """
-            This is used to ensure that the database is closed
-        """
-        try:
-            if self._auto_save:
-                self._con.commit()
-            self._con.close()
 
-            if self._delete_on_close:
-                file = f"{self._db_name}.{_DATABASE_FILE_EXTENSION}"
-                if os.path.exists(file):
-                    os.remove(file)
-        except AttributeError:
-            pass
 
-        if not self._test_mode:
-            try:
-                Database.active_count -= 1
-            except AttributeError:
-                pass
-
-    def __init__(self, db_name="", test_mode=False, delete_on_close=False):
-        """
-            This is used to initialise the database class.
-        """
-        self._test_mode = test_mode
-
-        # Slices the name to isolate any extension within the file name.
-
-        file_name_extension = db_name[: -len(_DATABASE_FILE_EXTENSION)]
-
-        # Checks if the file extension is present for any
-        # of the file extensions below.
-        if file_name_extension == ".db":
-            # Removes the extension from the file name as this will count
-            # towards the data validation.
-            db_name = db_name[0:-3]
-        if db_name == "":
-            error_msg = "No File Name has been provided, "
-            error_msg += "please specify a file name."
-            raise DatabaseNamingError(error_msg)
-        elif len(db_name) > 20:
-            error_msg = "File Name provided is longer than 20 characters, "
-            error_msg += " please choose a shorter name."
-            raise DatabaseNamingError(error_msg)
-        elif len(db_name) <= 3:
-            raise DatabaseNamingError("File Name provided is too short.")
-        elif not db_name.isalpha():
-            error_msg = "File Name includes forbidden characters."
-            raise DatabaseNamingError(error_msg)
-
-        if test_mode:
-            # Stops the code before it creates a database connection.
-            return
-
-        setup_file = f"{db_name}.{_DATABASE_FILE_EXTENSION}"
-        setup = os.path.exists(setup_file)
-        self._con = sqlite3.connect(f"{db_name}.{_DATABASE_FILE_EXTENSION}")
-        self._db_name = db_name
-        self._delete_on_close = delete_on_close
-
-        # Run setup if 'not setup'
-        if not setup:
-            self._setup()
-
-        Database.active_count += 1
+if __name__ == '__main__':
+    db = Database('test.db')
+    with db as cursor:
+        print(cursor)
+        users = cursor.execute('SELECT username FROM users')
+        for i in users:
+            print(i[0])
