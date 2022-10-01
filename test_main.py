@@ -1,11 +1,17 @@
-import main
-from storage import Database
-from management import setup
+"""
+    This is a test file for the main.py file.
+"""
 import pytest
-
+import main
 
 class TestInvalidPageParent:
+    """
+        This is used to ensure that the page error works.
+    """
     def test___init__(self):
+        """
+        This tests that the __init__ method works.
+        """
         with pytest.raises(main.InvalidPageParent):
             error = main.InvalidPageParent("Test")
             assert (
