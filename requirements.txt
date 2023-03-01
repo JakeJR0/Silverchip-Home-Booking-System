@@ -48,7 +48,6 @@ Keras-Preprocessing==1.1.2
 kiwisolver==1.3.2
 lockfile==0.12.2
 Markdown==3.3.4
-MarkupSafe==2.0.1
 matplotlib==3.4.3
 mccabe>=0.6.0
 msgpack==1.0.2
