@@ -98,7 +98,7 @@ six==1.16.0
 sounddevice==0.4.2
 SQLAlchemy==1.4.23
 sqlparse==0.4.2
-tensorflow-cpu==2.9.3
+tensorflow-cpu==2.11.1
 termcolor==1.1.0
 tkcalendar==1.6.1
 toml==0.10.2
